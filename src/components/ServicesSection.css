@@ -1,0 +1,227 @@
+/* ================================================================
+   SERVICES — Swiss editorial index. SCOPED STYLES.
+
+   Every selector is namespaced `svcs-` and scoped under `.svcs-root`.
+   No global/body/html rules, no bare element selectors, no `*`, no
+   position:fixed. Content is VISIBLE BY DEFAULT — reveal start-states
+   come from JS only. Animations touch transform / opacity / scaleX only.
+================================================================ */
+
+.svcs-root {
+  /* config-driven custom props (set inline; safe fallbacks here) */
+  --svcs-bg: #0a0a0a;
+  --svcs-text: #f4f4f4;
+  --svcs-muted: #8a8a8a;
+  --svcs-y-from: 40px;
+  --svcs-rule: rgba(244, 244, 244, 0.16);
+
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  /* SOLID DARK from the very start — no in-section background flip. */
+  background: var(--svcs-bg);
+  color: var(--svcs-text);
+  overflow-x: clip; /* never allow horizontal overflow from reveals */
+  z-index: 3; /* sit above the sticky hero like the other opaque sections */
+  padding: clamp(4rem, 9vw, 9rem) clamp(1.25rem, 5vw, 6rem);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.svcs-root *,
+.svcs-root *::before,
+.svcs-root *::after {
+  box-sizing: border-box;
+}
+
+/* Accessible heading, visually hidden (the visible label lives in the header). */
+.svcs-root .svcs-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- A) HEADER ROW ---------- */
+.svcs-root .svcs-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.svcs-root .svcs-mask {
+  display: inline-block;
+  overflow: hidden; /* mask for the translateY reveal */
+  vertical-align: bottom;
+  max-width: 100%;
+}
+.svcs-root .svcs-mask--center {
+  justify-self: center;
+}
+.svcs-root .svcs-mask--right {
+  justify-self: end;
+}
+
+.svcs-root .svcs-line {
+  display: inline-block;
+  font-size: clamp(0.65rem, 1.1vw, 0.8rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--svcs-muted);
+  white-space: nowrap;
+}
+
+/* ---------- full-width 1px dividers (header / statement) ---------- */
+.svcs-root .svcs-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--svcs-rule);
+  transform-origin: left center;
+  margin: clamp(1rem, 2vw, 1.75rem) 0;
+}
+
+/* ---------- B) STATEMENT HEADLINE ---------- */
+.svcs-root .svcs-statement {
+  padding: clamp(1rem, 3vw, 2.5rem) 0;
+}
+
+.svcs-root .svcs-headline {
+  margin: 0;
+  max-width: 66%;
+  font-size: clamp(1.75rem, 5.2vw, 4.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--svcs-text);
+  text-wrap: balance;
+}
+
+/* SplitText line wrappers keep descenders from being clipped by the mask. */
+.svcs-root .svcs-split-line {
+  display: block;
+  will-change: transform;
+}
+
+/* ---------- C) SERVICE INDEX ---------- */
+.svcs-root .svcs-list {
+  list-style: none;
+  margin: clamp(1rem, 2vw, 1.75rem) 0 0;
+  padding: 0;
+}
+
+.svcs-root .svcs-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.5fr 5fr 3fr;
+  grid-template-areas: 'num name desc';
+  align-items: center;
+  column-gap: clamp(1rem, 3vw, 3rem);
+  padding: clamp(1.6rem, 3.4vw, 3rem) 0;
+}
+
+/* per-row top divider rule (drawable via scaleX) */
+.svcs-root .svcs-rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--svcs-rule);
+  transform-origin: left center;
+}
+/* closing rule below the last row (in flow, not absolute) */
+.svcs-root .svcs-rule--bottom {
+  position: relative;
+  display: block;
+}
+
+.svcs-root .svcs-num {
+  grid-area: num;
+  font-size: clamp(0.9rem, 1.6vw, 1.35rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--svcs-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.svcs-root .svcs-name {
+  grid-area: name;
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 3.25rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  font-weight: 500;
+  color: var(--svcs-text);
+  overflow-wrap: break-word;
+  /* the per-letter masked reveal + skew settle need room to slide */
+  will-change: transform;
+}
+
+.svcs-root .svcs-desc {
+  grid-area: desc;
+  margin: 0;
+  font-size: clamp(0.85rem, 1.1vw, 1rem);
+  line-height: 1.5;
+  color: var(--svcs-muted);
+  overflow-wrap: break-word;
+}
+
+/* ================================================================
+   RESPONSIVE REFLOW — the 4-zone grid collapses cleanly.
+================================================================ */
+
+/* Tablet: number+name on top line, image below-left, description below. */
+@media (max-width: 1024px) {
+  .svcs-root .svcs-headline {
+    max-width: 85%;
+  }
+  .svcs-root .svcs-row {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'num name'
+      'desc desc';
+    align-items: start;
+    column-gap: clamp(0.75rem, 2vw, 1.5rem);
+    row-gap: clamp(1rem, 2.6vw, 1.75rem);
+  }
+  .svcs-root .svcs-num {
+    align-self: baseline;
+  }
+}
+
+/* Mobile: stack vertically — num+name, then full-width capped image, then desc. */
+@media (max-width: 640px) {
+  .svcs-root .svcs-headline {
+    max-width: 100%;
+  }
+  .svcs-root .svcs-row {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'num name'
+      'desc desc';
+    row-gap: clamp(0.9rem, 4vw, 1.4rem);
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION — static section, everything visible, no motion.
+   (JS also bails early; this guards any CSS-side movement.)
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .svcs-root .svcs-divider,
+  .svcs-root .svcs-rule,
+  .svcs-root .svcs-line,
+  .svcs-root .svcs-headline,
+  .svcs-root .svcs-num,
+  .svcs-root .svcs-name,
+  .svcs-root .svcs-desc {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

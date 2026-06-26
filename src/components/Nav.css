@@ -1,0 +1,244 @@
+/* ----------------------------------------------------------------
+   LOGO FONT — custom Arabic display face for the "مروان" wordmark.
+   File lives at public/fonts/font-logo.ttf (renamed from the original
+   "font logo.ttf" so the path has no space). Served at /fonts/… .
+------------------------------------------------------------------ */
+@font-face {
+  font-family: 'LogoFont';
+  src: url('/fonts/font-logo.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ================================================================
+   NAVBAR — floating white "pill" bar.
+
+   Outer .nav = the fixed, INSET wrapper (handles position + the
+   hide-on-scroll translate). Inner .nav__pill = the white rounded bar
+   with a soft shadow — shown from the first paint at every scroll
+   position. The wrapper is click-through; only the pill captures
+   pointer events, so the inset margins around it stay transparent to
+   the hero underneath.
+
+   Only background / box-shadow / transform / padding animate — all
+   cheap, GPU-friendly, 60fps.
+================================================================ */
+
+/* ----------------------------------------------------------------
+   EXPOSED VISUAL CONSTANTS — tune the floating pill here.
+   (Behavioural constants — scroll threshold, hide-on-scroll, tagline
+    text — live at the top of Nav.jsx.)
+------------------------------------------------------------------ */
+.nav {
+  --nav-inset: clamp(0.9rem, 2vw, 1.5rem); /* float gap from screen edges */
+  --nav-max-width: 1320px; /* pill never grows wider than this */
+  --nav-radius: 999px; /* fully rounded pill */
+  --nav-fill: #ffffff; /* white pill background */
+  --nav-text: #0a0a0a; /* near-black text / marks */
+  --nav-shadow: 0 14px 34px -16px rgba(10, 10, 10, 0.28),
+    0 4px 12px -6px rgba(10, 10, 10, 0.14); /* soft, subtle shadow */
+
+  /* internal padding */
+  --nav-pad-x: clamp(0.7rem, 1.7vw, 1.05rem);
+  --nav-pad-y: clamp(0.5rem, 1.1vw, 0.7rem);
+
+  /* HIDE / SHOW MOTION (scroll-down hides, scroll-up shows) — tune the feel.
+     Gentle fade + a small lift, not a hard slide-off. */
+  --nav-hide-duration: 0.6s; /* slow, buttery (≈0.5–0.7s) */
+  --nav-hide-ease: cubic-bezier(0.22, 1, 0.36, 1); /* soft, premium */
+  --nav-hide-shift: 0.85rem; /* small upward translate while fading out */
+}
+
+/* ---------------- Fixed, inset wrapper ---------------- */
+.nav {
+  position: fixed;
+  top: var(--nav-inset);
+  left: var(--nav-inset);
+  right: var(--nav-inset);
+  z-index: 9995; /* ABOVE the menu (9990) so the trigger stays clickable */
+  display: flex;
+  justify-content: center; /* centre the max-width pill */
+  color: var(--nav-text);
+  pointer-events: none; /* wrapper is click-through… */
+  /* fade + transform together, soft easing — melts away, never snaps */
+  transition: transform var(--nav-hide-duration) var(--nav-hide-ease),
+    opacity var(--nav-hide-duration) var(--nav-hide-ease);
+  will-change: transform, opacity;
+}
+
+/* hide-on-scroll: gentle fade out with a small upward lift (not a hard slide) */
+.nav.is-hidden {
+  transform: translateY(calc(-1 * var(--nav-hide-shift)));
+  opacity: 0;
+}
+/* once faded out, don't let the invisible pill catch clicks */
+.nav.is-hidden .nav__pill {
+  pointer-events: none;
+}
+/* never hide while the menu is open — keep Close reachable */
+.nav.is-open {
+  transform: none;
+  opacity: 1;
+}
+
+/* ---------------- The pill itself ---------------- */
+.nav__pill {
+  width: 100%;
+  max-width: var(--nav-max-width);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: var(--nav-pad-y) var(--nav-pad-x);
+  border-radius: var(--nav-radius);
+  background-color: var(--nav-fill); /* white floating pill from first paint */
+  box-shadow: var(--nav-shadow); /* soft, subtle shadow */
+  pointer-events: auto; /* the pill is interactive */
+}
+
+/* ---------------- Left: logo + tagline ---------------- */
+.nav__left {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.7rem, 1.6vw, 1.1rem);
+  min-width: 0; /* allow the tagline to truncate rather than overflow */
+}
+.nav__logo {
+  display: inline-flex;
+  flex: none;
+  cursor: pointer;
+}
+.nav__logo:focus-visible {
+  outline: 1.5px solid var(--nav-text);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+/* ---- "مروان" wordmark — custom Arabic display face ----
+   Size + vertical nudge are exposed as constants on .nav (set from JSX)
+   so the Arabic baseline can be fine-tuned per taste / breakpoint. */
+.nav__logo-mark {
+  display: inline-block;
+  font-family: 'LogoFont', 'Reem Kufi', 'Space Grotesk', system-ui, sans-serif;
+  font-size: var(--logo-size, clamp(1.25rem, 2.85vw, 1.75rem));
+  line-height: 1; /* tight box so it centres cleanly against tagline + MENU */
+  color: var(--nav-text); /* near-black — reads on white pill or transparent */
+  /* baseline offset — Arabic display faces often sit a touch high/low; nudge
+     so "مروان" is optically centred next to the tagline. */
+  transform: translateY(var(--logo-offset, 0.02em));
+  white-space: nowrap;
+}
+
+/* ---------------- Tagline (DESKTOP ONLY) ----------------
+   One clean line beside the logo on large screens; hidden on small
+   screens (see responsive block) where it was cramped. */
+.nav__tagline {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: clamp(0.6rem, 1.05vw, 0.72rem);
+  font-weight: 700;
+  letter-spacing: clamp(0.08em, 0.4vw, 0.14em);
+  text-transform: uppercase;
+  line-height: 1.25;
+  color: var(--nav-text);
+  white-space: nowrap; /* always one line — never wraps/stacks */
+}
+
+/* ---------------- Right: menu trigger ---------------- */
+.nav__trigger {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: opacity 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+/* quiet, tasteful hover */
+.nav__trigger:hover {
+  opacity: 0.62;
+}
+.nav__trigger-label {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.nav__trigger:focus-visible {
+  outline: 1.5px solid var(--nav-text);
+  outline-offset: 4px;
+}
+
+/* Two clean lines that glide together into a single line on open. */
+.nav__mark {
+  position: relative;
+  display: block;
+  width: 24px;
+  height: 9px;
+}
+.nav__bar {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.6px;
+  background: currentColor;
+  transition: transform 0.5s var(--ease);
+  will-change: transform;
+}
+.nav__bar--t {
+  top: 0;
+}
+.nav__bar--b {
+  bottom: 0;
+}
+/* OPEN — both lines slide to the vertical centre and overlap into one. */
+.nav__trigger[aria-expanded='true'] .nav__bar--t {
+  transform: translateY(3.7px);
+}
+.nav__trigger[aria-expanded='true'] .nav__bar--b {
+  transform: translateY(-3.7px);
+}
+
+/* ================================================================
+   RESPONSIVE — tagline shows on DESKTOP only. At/below 48rem (~768px)
+   it was getting cramped, so it is HIDDEN and the bar shows just
+   logo + MENU, balanced (logo left, MENU right). The tagline still
+   lives in the About section at those sizes.
+================================================================ */
+@media (max-width: 48rem) {
+  .nav__tagline {
+    display: none; /* hidden on tablet/phone */
+  }
+}
+
+/* Phone — let the pill span the inset edges, comfortable tap target. */
+@media (max-width: 36rem) {
+  .nav {
+    --nav-max-width: none;
+  }
+  .nav__trigger {
+    padding: 0.5rem 0.55rem; /* comfortable tap target */
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION — no hide-on-scroll, no mark glide. The white
+   floating pill is unchanged (it never animated anyway).
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .nav {
+    transition: none;
+  }
+  .nav.is-hidden {
+    transform: none; /* never hide */
+    opacity: 1;
+  }
+  .nav__bar,
+  .nav__trigger {
+    transition: none;
+  }
+}

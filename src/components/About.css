@@ -1,0 +1,155 @@
+/* ================================================================
+   ABOUT — the covering panel. Solid, opaque, minimal Swiss.
+   Two-column: huge "About" (left) + content column (right). It sits in
+   normal flow ABOVE the sticky hero (see App.css) and rises over it as
+   the page scrolls. Fully opaque background covers the hero cleanly.
+================================================================ */
+.about {
+  position: relative;
+  z-index: 1; /* ABOVE the sticky hero (.hero-cover is z 0) */
+  /* NO forced height: the section is sized to its content + comfortable
+     vertical padding (--about-pad-y), so there are no large empty bands.
+     The hero→About cover still works: the strip section that follows About
+     is opaque and contiguous, so About + strip together fully cover the
+     pinned hero on scroll — About no longer needs to be a full viewport tall. */
+  background: var(--about-bg, #0a0a0a);
+  color: #f4f2ee;
+  /* thin top edge + soft lift, so the panel reads as rising over the hero */
+  border-top: 1px solid rgba(244, 242, 238, 0.1);
+  box-shadow: 0 -24px 60px rgba(10, 10, 10, 0.35);
+  display: flex;
+  justify-content: center; /* centre the content cluster horizontally */
+}
+
+/* two-column grid; content cluster with comfortable, roomy vertical padding
+   (--about-pad-y, set from About.jsx) so it breathes without a dead band. */
+.about__inner {
+  width: 100%;
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: var(--about-pad-y, clamp(3.25rem, 8vh, 5.5rem))
+    clamp(1.3rem, 4vw, 4rem);
+  display: grid;
+  grid-template-columns: minmax(auto, 1fr) minmax(0, 1.5fr);
+  gap: clamp(2rem, 6vw, 5.5rem);
+  align-items: center; /* heading + content baseline-balanced within the row */
+}
+
+/* ---------------- LEFT: huge heading ---------------- */
+.about__heading {
+  margin: 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(3rem, 9vw, 8rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: #f4f2ee;
+}
+
+/* ---------------- RIGHT: content column ---------------- */
+.about__content {
+  /* keep the bio measure contained on large screens — never run to the edge */
+  max-width: 42rem;
+}
+
+/* 1) Bio — big, bold, readable */
+.about__bio {
+  margin: 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 500;
+  font-size: clamp(1.3rem, 2.6vw, 2.1rem);
+  line-height: 1.45; /* comfortable for easy reading */
+  letter-spacing: -0.01em;
+  color: #f4f2ee;
+}
+.about__name {
+  font-weight: 700; /* emphasize the name */
+}
+.about__pronoun {
+  font-size: 0.62em;
+  font-weight: 500;
+  color: #8a8a86; /* muted grey */
+  letter-spacing: 0.01em;
+}
+
+/* 2) Tagline — small, uppercase, muted, letter-spaced */
+.about__tagline {
+  margin: clamp(1.4rem, 3.5vh, 2.2rem) 0 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.72rem, 1.4vw, 0.9rem);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a8a86; /* muted grey */
+}
+
+/* 3) Experience — repeatable rows: logo + (role / org) */
+.about__experience {
+  list-style: none;
+  margin: clamp(2rem, 5vh, 3.2rem) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2.5vh, 1.6rem);
+}
+.exp {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.9rem, 2vw, 1.3rem);
+}
+.exp__logo {
+  flex: none;
+  width: clamp(2.6rem, 6vw, 3.4rem);
+  height: clamp(2.6rem, 6vw, 3.4rem);
+  border-radius: 6px;
+  object-fit: cover;
+}
+.exp__logo--placeholder {
+  display: block;
+  background: rgba(244, 242, 238, 0.08);
+  border: 1px solid rgba(244, 242, 238, 0.14);
+}
+/* Avatar photo — fills the square, rounded to match, subtle site-matching border. */
+.exp__logo--avatar {
+  border: 1px solid rgba(244, 242, 238, 0.14);
+}
+/* Monogram fallback — bold white "م" centred on the dark square (never empty). */
+.exp__logo--monogram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f4f2ee;
+  font-family: 'Reem Kufi', 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  line-height: 1;
+  user-select: none;
+}
+.exp__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  line-height: 1.2;
+}
+.exp__role {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700; /* bold role title */
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  color: #f4f2ee;
+}
+.exp__org {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: clamp(0.85rem, 1.4vw, 1rem);
+  color: #8a8a86; /* muted grey */
+}
+
+/* ---------------- Responsive: stack on tablet / phone ---------------- */
+@media (max-width: 60rem) {
+  .about__inner {
+    grid-template-columns: 1fr; /* About on top, content below */
+    gap: clamp(1.6rem, 5vh, 2.6rem);
+  }
+  .about__content {
+    max-width: 46rem; /* comfortable full-width measure */
+  }
+}

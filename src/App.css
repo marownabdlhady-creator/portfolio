@@ -1,0 +1,59 @@
+/* ================================================================
+   HERO COVER — the scroll transition.
+
+   The hero is wrapped in a STICKY box pinned to the top of the
+   viewport. The About section follows in normal flow with a higher
+   stacking order + a solid background, so as you scroll it rises up and
+   COVERS the pinned hero — a native, buttery-smooth cover with zero
+   scroll-driven layout (no pin-jump, no flicker). An optional GSAP
+   scrub (App.jsx) only nudges transform/opacity for subtle depth.
+================================================================ */
+.hero-cover {
+  position: sticky;
+  top: 0;
+  z-index: 0; /* BELOW the About panel (z 1) */
+  height: 100svh; /* matches the hero's own height unit */
+  /* matches the hero's paper base, so the subtle parallax scale never
+     reveals a mismatched edge as the hero recedes */
+  background: #ecebe9;
+}
+
+/* The transform target for the optional parallax (kept separate from the
+   sticky box so scaling never interferes with stickiness). */
+.hero-cover__inner {
+  position: relative;
+  height: 100%;
+  transform-origin: 50% 42%; /* recede toward the figure, not dead-centre */
+  will-change: transform;
+}
+
+/* Dim overlay — fades in over the receding hero as it gets covered.
+   Only ever visible on the not-yet-covered part of the hero (About paints
+   over the rest), reading as gentle depth. */
+.hero-cover__dim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #0a0a0a;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* ================================================================
+   REDUCED MOTION — no cover effect. The hero and About scroll in
+   normal document flow (About simply below the hero). No sticky pin,
+   no scrub, no transform. Fully accessible, identical content.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .hero-cover {
+    position: static;
+    background: transparent;
+  }
+  .hero-cover__inner {
+    transform: none !important;
+  }
+  .hero-cover__dim {
+    display: none;
+  }
+}

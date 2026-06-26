@@ -1,0 +1,66 @@
+/* ================================================================
+   SOUND TOGGLE — minimal Swiss, fixed bottom-LEFT (opposite the
+   bottom-right WhatsApp FAB, so nothing crowds). White pill matching
+   the site's black/white aesthetic. All selectors `snd-` namespaced;
+   no global/body styles. The only fixed element in this feature.
+================================================================ */
+.snd-toggle {
+  --snd-inset: 24px; /* gap from each edge (matches the WhatsApp FAB) */
+  --snd-size: 44px;
+
+  position: fixed;
+  z-index: 9970; /* above content; BELOW the fullscreen menu (9990) */
+  left: var(--snd-inset);
+  bottom: calc(var(--snd-inset) + env(safe-area-inset-bottom, 0px));
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--snd-size);
+  height: var(--snd-size);
+  padding: 0;
+  border: 1px solid rgba(10, 10, 10, 0.12);
+  border-radius: 50%;
+  background: #ffffff;
+  color: #0a0a0a;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  box-shadow: 0 10px 26px -8px rgba(10, 10, 10, 0.4),
+    0 4px 10px -4px rgba(10, 10, 10, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.snd-toggle__icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+/* OFF state reads a touch muted; ON state is solid near-black. */
+.snd-toggle--off {
+  color: #6b6b6b;
+}
+
+@media (hover: hover) {
+  .snd-toggle:hover {
+    transform: scale(1.06);
+    box-shadow: 0 14px 32px -8px rgba(10, 10, 10, 0.45),
+      0 6px 14px -4px rgba(10, 10, 10, 0.3);
+  }
+}
+
+/* Visible keyboard focus (Swiss: a clean near-black ring). */
+.snd-toggle:focus-visible {
+  outline: 2px solid #0a0a0a;
+  outline-offset: 3px;
+}
+
+/* Comfortable on phones; never adds horizontal scroll (fixed). */
+@media (max-width: 640px) {
+  .snd-toggle {
+    --snd-size: 42px;
+    --snd-inset: 16px;
+  }
+}

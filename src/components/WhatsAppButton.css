@@ -1,0 +1,74 @@
+/* ================================================================
+   WHATSAPP FLOATING BUTTON — scoped + namespaced (`wa-`).
+
+   No global selectors — nothing here can affect other sections. Fixed
+   bottom-right; z-index below the fullscreen menu (9990) so the opaque
+   menu overlay covers it when open. Bottom-RIGHT, while the compact pill
+   nav is bottom-CENTRE → they never overlap. Respects safe-area insets
+   on phones; uses fixed positioning so it adds no horizontal scrollbar.
+================================================================ */
+.wa-fab {
+  --wa-size: 58px; /* button diameter */
+  --wa-inset: 24px; /* gap from each edge */
+  --wa-green: #25d366; /* WhatsApp brand green */
+
+  position: fixed;
+  z-index: 9970; /* above content; BELOW the menu (9990) + nav trigger (9995) */
+  right: var(--wa-inset);
+  /* respect the phone home-indicator / safe area */
+  bottom: calc(var(--wa-inset) + env(safe-area-inset-bottom, 0px));
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--wa-size);
+  height: var(--wa-size);
+  border-radius: 50%;
+  background: var(--wa-green);
+  color: #ffffff; /* the inline SVG uses currentColor */
+  text-decoration: none;
+
+  box-shadow: 0 10px 26px -8px rgba(10, 10, 10, 0.4),
+    0 4px 10px -4px rgba(10, 10, 10, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wa-fab__icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+/* Subtle hover lift (pointer devices only). */
+@media (hover: hover) {
+  .wa-fab:hover {
+    transform: scale(1.06);
+    box-shadow: 0 14px 32px -8px rgba(10, 10, 10, 0.45),
+      0 6px 14px -4px rgba(10, 10, 10, 0.3);
+  }
+}
+
+/* Visible keyboard focus. */
+.wa-fab:focus-visible {
+  outline: 3px solid #0a0a0a;
+  outline-offset: 3px;
+}
+
+.wa-fab:active {
+  transform: scale(0.97);
+}
+
+/* Slightly tighter inset on small phones (still a comfortable tap target). */
+@media (max-width: 480px) {
+  .wa-fab {
+    --wa-size: 56px;
+    --wa-inset: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa-fab {
+    transition: none;
+  }
+}

@@ -1,0 +1,120 @@
+/* ================================================================
+   PROJECTS — clean 2-column work grid (scoped + namespaced).
+
+   EVERY rule is scoped under `.pjx` and every class is prefixed `pjx-`.
+   No global selectors (no bare img/ul/li/section/*, no body, no
+   ::selection) — nothing here can affect the navbar, hero, menu,
+   About, or the marquee strip. Minimal Swiss: light cream panel,
+   near-black ink, Space Grotesk display + JetBrains Mono labels.
+
+   The section is opaque AND positioned above the page-long sticky hero
+   (hero z 0, About z 1, strip z 2) so the hero can't paint through it.
+   It scrolls NORMALLY — no horizontal translate, no pin.
+================================================================ */
+
+.pjx {
+  /* ---- EXPOSED CONSTANTS ----------------------------------------
+     Section background + text colour. Switch to a dark scheme by
+     flipping these (e.g. --pjx-bg:#0a0a0a; --pjx-ink:#f4f2ee;). */
+  --pjx-bg: #ecebe9; /* SECTION BACKGROUND — light cream (matches the hero) */
+  --pjx-ink: #0a0a0a; /* heading / project-name colour (near-black on light) */
+
+  --pjx-muted: #6b6862; /* warm grey for labels/meta (site --muted) */
+  --pjx-img-bg: rgba(10, 10, 10, 0.06); /* placeholder block before image loads */
+
+  /* TUNING — grid layout (bigger, more breathable cards) */
+  --pjx-cols: 2; /* columns on desktop/tablet */
+  --pjx-gap-x: clamp(2rem, 5vw, 5rem); /* horizontal gap between cards */
+  --pjx-gap-y: clamp(3.5rem, 8vh, 6rem); /* vertical gap between rows */
+  --pjx-ratio: 3 / 2; /* thumbnail aspect ratio (consistent across cards) */
+
+  /* FONTS — reuse the site's own faces (no new fonts):
+     • display heading = the hero/About display font ('Anton' headline face,
+       same stack as .hero__heading) so typography is consistent site-wide.
+     • card titles = the site's standard text font (Space Grotesk, index.css).
+     • labels/meta = the site's mono face. */
+  --pjx-display-font: 'Anton', 'Space Grotesk', sans-serif;
+  --pjx-text-font: 'Space Grotesk', system-ui, sans-serif;
+  --pjx-label-font: 'JetBrains Mono', ui-monospace, monospace;
+
+  position: relative;
+  z-index: 3; /* above the sticky hero + strip → no bleed-through */
+  background-color: var(--pjx-bg);
+  color: var(--pjx-ink);
+  overflow-x: clip; /* belt-and-braces: never contribute a PAGE scrollbar */
+  padding: clamp(3rem, 8vh, 6rem) clamp(1.25rem, 5vw, 4rem)
+    clamp(4rem, 10vh, 8rem);
+}
+
+/* Scoped box-sizing (only matches descendants of .pjx — cannot leak). */
+.pjx *,
+.pjx *::before,
+.pjx *::after {
+  box-sizing: border-box;
+}
+
+/* ---- Header ---------------------------------------------------- */
+.pjx-head {
+  margin-bottom: clamp(2.5rem, 6vh, 4.5rem);
+}
+
+.pjx-title {
+  margin: 0;
+  /* Same display font as the hero headline ('FORM FOLLOWS FEELING'). */
+  font-family: var(--pjx-display-font);
+  font-weight: 400; /* Anton is single-weight */
+  font-size: clamp(2.5rem, 9vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.015em; /* matches the hero headline tracking */
+  text-transform: uppercase;
+  color: var(--pjx-ink);
+}
+
+/* ---- Heading char-cycle (scoped to the title only) -------------
+   SAFE BY DEFAULT: the real "Projects" text (.pjx-title-sr) is shown
+   normally; the animated word-stack (.pjx-title-anim) is display:none
+   until JS adds .pjx-title--animated. So if JS/SplitText never runs,
+   the heading is the plain, fully-visible "PROJECTS". Inherits the
+   title's font / size / colour, so the animated words look identical. */
+.pjx-title-sr {
+  display: block;
+}
+
+/* When the cycle is active, keep the SR text readable to AT but out of
+   sight (NOT display:none / visibility:hidden — those drop it from AT). */
+.pjx-title--animated .pjx-title-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pjx-title-anim {
+  display: none; /* revealed by JS only — never blank if JS fails */
+}
+.pjx-title--animated .pjx-title-anim {
+  display: block;
+  position: relative;
+  height: 1em; /* reserve one line so the grid below doesn't shift */
+  line-height: 1;
+}
+
+.pjx-word {
+  position: absolute;
+  top: 0;
+  left: 0;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0; /* JS sets to 1 after SplitText; inactive words are masked away */
+  will-change: transform;
+}
+
+/* ---- The project grid was removed (blank slate). Only the section
+   wrapper + title above remain; the area below the title is intentionally
+   empty until a new grid is built. ------------------------------- */

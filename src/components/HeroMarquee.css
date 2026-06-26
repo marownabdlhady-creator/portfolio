@@ -1,0 +1,334 @@
+/* ----------------------------------------------------------------
+   MEZCAL — the hero marquee display face. File lives at
+   public/fonts/Mezcal.otf (served at /fonts/Mezcal.otf — clean name,
+   no spaces). font-display:swap shows the fallback instantly, then
+   swaps Mezcal in once loaded (no invisible-text flash).
+------------------------------------------------------------------ */
+@font-face {
+  font-family: 'Mezcal';
+  src: url('/fonts/Mezcal.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ================================================================
+   HERO — PART 1: grid-paper background + seamless giant-type marquee
+   running BEHIND a bottom-anchored transparent cut-out figure.
+
+   Only transform / opacity animate (GPU, 60fps). The seamless loop is
+   a single translateX on the strip — it never reflows.
+
+   Responsive sizing is FULLY FLUID — no media queries. The figure height
+   and the marquee type size are each one clamp() built from MIN/PREF/MAX
+   knobs set inline from JS. The width-based PREF term shrinks the figure
+   as the viewport narrows; the MAX term equals today's desktop value, so
+   wide screens are pixel-identical to before.
+================================================================ */
+.hero-m {
+  --img-scale: 1; /* depth/shadow footprint multiplier (kept at 1) */
+
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden; /* clips the marquee + oversized figure → no scrollbars */
+  background: #ecebe9; /* light "paper" base */
+  isolation: isolate; /* own stacking context for the layered z-indexes */
+}
+
+/* ---------------- Atmosphere: gentle light + depth on the paper ----------------
+   Two stacked radials: a faint LIGHTER pool behind the figure's upper body,
+   and a whisper-soft vignette that deepens the very edges so focus lands
+   centre. Extremely gentle — texture, not a visible gradient. */
+.hero-m__atmosphere {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* below the grid */
+  pointer-events: none;
+  background:
+    /* lighter pool, centred a little above middle (behind the upper body) */
+    radial-gradient(
+      62% 52% at 50% 38%,
+      rgba(255, 255, 255, 0.38) 0%,
+      rgba(255, 255, 255, 0) 60%
+    ),
+    /* barely-there edge vignette */
+    radial-gradient(
+      125% 105% at 50% 48%,
+      rgba(0, 0, 0, 0) 58%,
+      rgba(10, 10, 10, 0.06) 100%
+    );
+}
+
+/* ---------------- Andalusian arch: one restrained geometric touch ----------------
+   A soft pointed-arch (mihrab) pool of light behind the figure. The light only
+   shows INSIDE an arch silhouette (SVG mask), heavily softened so it reads as a
+   faint architectural glow — texture, never a drawn shape. No pattern, no gold.
+   Sits between the atmosphere and the grid (well behind the figure + type). */
+.hero-m__arch {
+  position: absolute;
+  left: 50%;
+  bottom: var(--arch-bottom, -2vh);
+  z-index: 0;
+  width: var(--arch-w, 58vh);
+  height: var(--arch-h, 86vh);
+  transform: translateX(-50%);
+  opacity: var(--arch-opacity, 0.5);
+  pointer-events: none;
+  /* faint light, brightest low-centre (behind the upper body), fading up + out */
+  background: radial-gradient(
+    62% 60% at 50% 62%,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.12) 48%,
+    rgba(255, 255, 255, 0) 78%
+  );
+  /* clip the light to a pointed-arch silhouette (stretched to the box) */
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 180' preserveAspectRatio='none'%3E%3Cpath d='M8 180 L8 86 Q8 18 60 8 Q112 18 112 86 L112 180 Z' fill='%23fff'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 180' preserveAspectRatio='none'%3E%3Cpath d='M8 180 L8 86 Q8 18 60 8 Q112 18 112 86 L112 180 Z' fill='%23fff'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  filter: blur(7px); /* soften the arch edge → glow, not an outline */
+}
+
+/* ---------------- Background: BACK_HIRO.png (replaces the grid paper) ----------------
+   Backmost layer. Fills the hero at every width (cover, centred, no-repeat) with
+   no distortion and no gaps; .hero-m's overflow:hidden prevents any horizontal
+   scrollbar. URL is supplied from JS via --hero-bg (BG_SRC). */
+.hero-m__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* backmost (behind atmosphere, arch, scrim, marquee, figure) */
+  pointer-events: none;
+  background-image: var(--hero-bg);
+  background-size: cover; /* fill cleanly at all widths — never distorts */
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* ---------------- Readability scrim behind the type ----------------
+   A soft, light band of the paper tone sitting ABOVE the background image and
+   BELOW the marquee, so the near-black (#0A0A0A) marquee text stays legible.
+   Kept subtle (opacity = --scrim-opacity) so it lifts contrast WITHOUT washing
+   out the image. Centred on the marquee midline and faded top/bottom + at the
+   edges so it never reads as a visible box over the photo. */
+.hero-m__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* above the bg image, below the marquee (z-index 1) */
+  pointer-events: none;
+  opacity: var(--scrim-opacity, 0.12);
+  /* vertical: brightest across the type band (≈25%–72%), fading to nothing
+     top + bottom so the rest of the photo is untouched */
+  background: linear-gradient(
+    to bottom,
+    rgba(236, 235, 233, 0) 8%,
+    rgba(236, 235, 233, 1) 32%,
+    rgba(236, 235, 233, 1) 68%,
+    rgba(236, 235, 233, 0) 92%
+  );
+  /* horizontal: also fade the band out toward the left/right edges so it reads
+     as a soft glow behind the moving type, not a hard horizontal stripe */
+  -webkit-mask-image: radial-gradient(
+    140% 100% at 50% 50%,
+    #000 45%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(140% 100% at 50% 50%, #000 45%, transparent 100%);
+}
+
+/* ================================================================
+   MARQUEE (behind the figure)
+================================================================ */
+.marquee {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* Fluid midline: 47% on desktop (MAX), easing to ~46% on phones (MIN) so the
+     band tracks the (shorter, lower) figure's head — the head keeps punching up
+     through the type at every width. Continuous, no breakpoint jump. */
+  top: clamp(
+    var(--m-top-phone, 38%),
+    var(--m-top-pref, 47vw),
+    var(--m-top, 47%)
+  );
+  z-index: 1; /* BEHIND the figure */
+  transform: translateY(-50%); /* centre the line's midline on --m-top */
+  overflow: hidden; /* clip the strip horizontally */
+  pointer-events: none;
+  /* line box holds the giant line without vertical clipping; translateY(-50%)
+     centres that box on --m-top. */
+  line-height: var(--m-lh, 1);
+}
+
+/* the moving strip: 2 identical groups sit side by side; sizing to content
+   (max-content) keeps it on one line and lets -50% wrap seamlessly. */
+.marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquee__group {
+  display: flex;
+  flex: none;
+}
+
+/* one copy = PHRASE + SEPARATOR. Every copy is identical, so the pattern
+   "phrase • phrase • …" tiles perfectly and the -50% wrap is seamless. */
+.marquee__copy {
+  display: flex;
+  align-items: center; /* vertically centre the separator against the phrase */
+  flex: none;
+}
+
+.marquee__word,
+.marquee__sep {
+  display: block;
+  flex: none;
+  /* Display face — set via --m-font (MARQUEE_FONT in the JSX). */
+  font-family: var(--m-font, 'Anton', 'Arial Narrow', sans-serif);
+  font-weight: var(--m-weight, 400); /* Anton ships one heavy weight */
+  /* ENORMOUS — one fluid clamp, no breakpoint jumps. MAX wins on desktop. */
+  font-size: clamp(
+    var(--m-size-min, 34svh),
+    var(--m-size-pref, 44vw),
+    var(--m-size-max, 46svh)
+  );
+  line-height: var(--m-lh, 1);
+  letter-spacing: normal;
+  white-space: nowrap; /* keep each phrase on one unbroken line */
+  color: #0a0a0a; /* near-black — unchanged */
+  user-select: none;
+}
+
+/* breathing space on EACH side of the separator → renders as " • ". Em-based,
+   so it scales with the type. This is the ONLY source of the inter-copy gap. */
+.marquee__sep {
+  margin: 0 var(--m-gap);
+}
+
+/* Reduced-motion rest state: no transform, centred so a word still frames
+   the figure. Overflow on .marquee keeps the ends clipped. */
+.marquee.is-static .marquee__track {
+  width: 100%;
+  justify-content: center;
+  transform: none;
+}
+
+/* ================================================================
+   DEPTH — soft darkening of the type plane directly behind the body.
+   Sits ABOVE the marquee, BELOW the figure, so the figure reads as
+   being in front of the type. Barely perceptible by design.
+   (GSAP owns the horizontal centring via xPercent: -50.)
+================================================================ */
+.hero-m__depth {
+  position: absolute;
+  left: 50%;
+  bottom: var(--img-bottom, 0px);
+  z-index: 2;
+  /* a tall, soft elliptical pool roughly the footprint of the body */
+  width: 42vh;
+  height: 74vh;
+  /* radial → darkest low-centre (behind torso), gone before the edges */
+  background: radial-gradient(
+    50% 58% at 50% 72%,
+    rgba(10, 10, 10, var(--depth-opacity, 0.07)) 0%,
+    rgba(10, 10, 10, 0) 66%
+  );
+  filter: blur(var(--depth-blur, 50px));
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ================================================================
+   GROUND CONTACT SHADOW — soft horizontal ellipse on the floor under
+   the figure. Heavy blur + low opacity = ambient floor contact, NOT a
+   hard outline / halo. Above the type, below the figure.
+   (GSAP owns the horizontal centring via xPercent: -50.)
+================================================================ */
+.hero-m__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--img-bottom, 0px) + var(--shadow-lift, 3.5vh));
+  z-index: 3;
+  width: calc(var(--shadow-w, 44vh) * var(--img-scale));
+  height: calc(var(--shadow-h, 7vh) * var(--img-scale));
+  /* flat ellipse: darkest at the contact point, fading out quickly outward */
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(0, 0, 0, var(--shadow-opacity, 0.16)) 0%,
+    rgba(0, 0, 0, 0) 72%
+  );
+  filter: blur(var(--shadow-blur, 38px));
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ================================================================
+   FIGURE (in front of the marquee)
+================================================================ */
+.hero-m__figure {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--img-bottom, 0px); /* vertical anchor (nudge via IMG_BOTTOM) */
+  z-index: 4; /* ABOVE the marquee + depth + ground shadow */
+  /* A full-width flex column centres the cut-out horizontally at EVERY width
+     while pinning it to the bottom edge. No transform lives here, so GSAP
+     owns yPercent/opacity for the entrance with zero conflict. */
+  display: flex;
+  justify-content: center; /* perfect horizontal centre, any viewport */
+  align-items: flex-end; /* base sits on the bottom edge */
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.hero-m__figure img {
+  display: block;
+  /* ONE fluid height drives the whole responsive behaviour: it equals --fig-max
+     on wide screens (desktop unchanged) and shrinks smoothly + monotonically as
+     the viewport narrows (the width-based --fig-pref takes over), with --fig-min
+     as the floor. No multipliers, no breakpoint steps → never jumps bigger. */
+  height: clamp(
+    var(--fig-min, 50vh),
+    var(--fig-pref, 74vw),
+    var(--fig-max, 92vh)
+  );
+  width: auto; /* keep the cut-out's aspect → never distorts */
+  /* No max-width/height caps: on narrow screens the landscape cut-out is wider
+     than the frame, so its SIDES are cropped by .hero-m's overflow:hidden —
+     the intended side-crop (head + torso stay centred), never a scrollbar. */
+  object-fit: contain;
+  /* no drop shadow (kept flat per spec) */
+  user-select: none;
+}
+
+/* ================================================================
+   FILM GRAIN — tiled, desaturated SVG noise across the whole hero at
+   very low opacity. Multiply blend sinks it into the paper for a
+   premium printed feel; it should never be individually visible.
+   Tiny inline asset (no extra request), tiled at a fixed pixel size.
+================================================================ */
+.hero-m__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 6; /* on top of everything, but inert */
+  pointer-events: none;
+  opacity: var(--grain-opacity, 0.05);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px; /* 1:1 with the tile → crisp, fine grain */
+}
+
+/* ================================================================
+   RESPONSIVE — there are intentionally NO media queries.
+
+   Sizing is fully fluid (see .hero-m__figure img and .marquee__word):
+   each is a single clamp() whose width-based PREF term shrinks the figure
+   / type continuously and monotonically as the viewport narrows, while
+   the MAX term keeps wide screens pixel-identical to desktop. Because the
+   figure's base stays pinned to the bottom edge at every size, the ground
+   shadow remains valid all the way down — so it is NOT hidden on mobile.
+================================================================ */

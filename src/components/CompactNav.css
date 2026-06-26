@@ -1,0 +1,125 @@
+/* ================================================================
+   COMPACT PILL NAV — small floating pill (logo + links), desktop +
+   tablet only. GSAP owns visibility (autoAlpha) + the enter/exit
+   transform, so when inactive it's visibility:hidden → not focusable.
+   Horizontal centring is done by GSAP (xPercent:-50), so there is NO
+   CSS transform here to conflict with it.
+================================================================ */
+.cnav {
+  --cnav-radius: 999px;
+  --cnav-shadow: 0 14px 34px -14px rgba(10, 10, 10, 0.3),
+    0 4px 12px -6px rgba(10, 10, 10, 0.16);
+
+  position: fixed;
+  left: 50%; /* GSAP xPercent:-50 completes the centring */
+  z-index: 9980; /* above content; below the fullscreen menu (9990) */
+  display: flex;
+  align-items: center;
+  gap: clamp(0.6rem, 1.4vw, 1rem);
+  padding: 0.45rem 0.55rem 0.45rem 0.7rem;
+  border-radius: var(--cnav-radius);
+  background: #ffffff;
+  box-shadow: var(--cnav-shadow);
+  will-change: transform, opacity;
+}
+
+/* anchored edge */
+.cnav--bottom {
+  bottom: var(--cnav-inset, 1.5rem);
+  top: auto;
+}
+.cnav--top {
+  top: var(--cnav-inset, 1.5rem);
+  bottom: auto;
+}
+
+/* ---------------- Logo (compact "مروان" wordmark) ---------------- */
+.cnav__logo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.2rem;
+  border-radius: 6px;
+}
+.cnav__logo:focus-visible {
+  outline: 1.5px solid #0a0a0a;
+  outline-offset: 3px;
+}
+.cnav__logo-mark {
+  display: inline-block;
+  font-family: 'LogoFont', 'Reem Kufi', 'Space Grotesk', system-ui, sans-serif;
+  font-size: clamp(1.05rem, 1.7vw, 1.3rem);
+  line-height: 1;
+  color: #0a0a0a; /* near-black */
+  transform: translateY(0.01em); /* optical baseline nudge */
+  white-space: nowrap;
+}
+
+/* ---------------- Links ---------------- */
+.cnav__links {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 1.1vw, 0.85rem);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cnav__link {
+  position: relative;
+  display: inline-block;
+  padding: 0.4rem 0.6rem;
+  border-radius: 999px;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #0a0a0a; /* near-black */
+  transition: opacity 0.25s var(--ease);
+}
+/* quiet hover: a subtle underline grows in + a touch of dim */
+.cnav__link::after {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: 0.22rem;
+  height: 1.4px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s var(--ease);
+}
+.cnav__link:hover {
+  opacity: 0.62;
+}
+.cnav__link:hover::after {
+  transform: scaleX(1);
+}
+.cnav__link:focus-visible {
+  outline: 1.5px solid #0a0a0a;
+  outline-offset: 2px;
+}
+
+/* ================================================================
+   PHONES — never show the compact pill (keep the MENU / fullscreen
+   menu as the only mobile nav). Keep this width in sync with the
+   MIN_WIDTH constant in CompactNav.jsx (768px).
+================================================================ */
+@media (max-width: 767.98px) {
+  .cnav {
+    display: none !important;
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION — no slide/scale (GSAP already swaps to a plain
+   fade). Hover underline becomes a simple dim, no grow animation.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .cnav {
+    will-change: auto;
+  }
+  .cnav__link,
+  .cnav__link::after {
+    transition: none;
+  }
+}

@@ -1,0 +1,656 @@
+/* ================================================================
+   FOOTER / CONTACT — the site's BLACK "floor". SCOPED STYLES.
+
+   Every selector is namespaced `ftr-` and scoped under `.ftr-root`.
+   No global/body/html rules, no bare element selectors, no `*` leakage,
+   NO position:fixed, NO pin. Content is VISIBLE BY DEFAULT — reveal
+   start-states come from JS only. Animations touch transform / opacity /
+   scaleX only → 60fps. The Arabic logo mark reuses the global
+   @font-face 'LogoFont' declared in Nav.css (a font family, not a leak).
+================================================================ */
+
+.ftr-root {
+  /* config-driven custom props (set inline; safe fallbacks here) */
+  --ftr-bg: #0a0a0a;
+  --ftr-text: #f4f4f4;
+  --ftr-muted: #8a8a8a;
+  --ftr-line: rgba(244, 244, 244, 0.16);
+  --ftr-line-soft: rgba(244, 244, 244, 0.1);
+  --ftr-field: rgba(244, 244, 244, 0.28);
+
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--ftr-bg);
+  color: var(--ftr-text);
+  overflow: hidden; /* let the giant wordmark bleed/clip; no horizontal scroll */
+  z-index: 3; /* sit above the sticky hero like the other opaque sections */
+  padding: clamp(3rem, 6vw, 6rem) clamp(1.25rem, 5vw, 6rem)
+    clamp(1.5rem, 3vw, 2.5rem);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ftr-root *,
+.ftr-root *::before,
+.ftr-root *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- shared mono label ---------- */
+.ftr-root .ftr-label {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.62rem, 0.85vw, 0.74rem);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ftr-text);
+}
+.ftr-root .ftr-label--muted {
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-dot {
+  font-size: 0.6em;
+  margin-right: 0.15em;
+  color: var(--ftr-text);
+}
+.ftr-root .ftr-dot--live {
+  color: #4ade80;
+}
+
+/* ---------- DIVIDERS — thin 1px rules (JS draws scaleX 0→1) ---------- */
+.ftr-root .ftr-divider {
+  height: 1px;
+  width: 100%;
+  background: var(--ftr-line);
+  transform-origin: left center;
+}
+.ftr-root .ftr-divider--top {
+  margin-bottom: clamp(1rem, 2.2vw, 1.6rem);
+}
+
+/* ---------- label row above the contact area ---------- */
+.ftr-root .ftr-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(1.75rem, 4vw, 3rem);
+}
+
+/* =====================================================
+   PART A — CONTACT AREA
+===================================================== */
+.ftr-root .ftr-contact {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: clamp(2rem, 5vw, 5rem);
+  align-items: start;
+  padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+/* ----- LEFT column ----- */
+.ftr-root .ftr-contact-left {
+  position: relative;
+  padding: clamp(0.5rem, 1.5vw, 1.25rem);
+}
+
+/* ＋ corner markers (decorative, never cause overflow — clipped by root) */
+.ftr-root .ftr-plus {
+  position: absolute;
+  font-size: clamp(0.7rem, 1.1vw, 0.95rem);
+  line-height: 1;
+  color: var(--ftr-muted);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+.ftr-root .ftr-plus--tl {
+  top: -0.2rem;
+  left: -0.2rem;
+}
+.ftr-root .ftr-plus--tr {
+  top: -0.2rem;
+  right: -0.2rem;
+}
+.ftr-root .ftr-plus--bl {
+  bottom: -0.2rem;
+  left: -0.2rem;
+}
+.ftr-root .ftr-plus--br {
+  bottom: -0.2rem;
+  right: -0.2rem;
+}
+
+.ftr-root .ftr-headline {
+  margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+  font-size: clamp(2rem, 4.6vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--ftr-text);
+}
+
+/* mask-up wrapper (shared by headline + giant wordmark) */
+.ftr-root .ftr-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em; /* breathing room so descenders never clip */
+}
+.ftr-root .ftr-mask-inner {
+  display: block;
+}
+
+.ftr-root .ftr-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
+}
+.ftr-root .ftr-avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(244, 244, 244, 0.08);
+}
+.ftr-root .ftr-avatar--mono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ftr-text);
+  border: 1px solid var(--ftr-line);
+}
+.ftr-root .ftr-avatar--sm {
+  width: 30px;
+  height: 30px;
+  font-size: 0.7rem;
+}
+.ftr-root .ftr-identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.ftr-root .ftr-identity-name {
+  font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+  font-weight: 600;
+  color: var(--ftr-text);
+}
+.ftr-root .ftr-identity-role {
+  font-size: clamp(0.78rem, 1.1vw, 0.88rem);
+  color: var(--ftr-muted);
+}
+
+.ftr-root .ftr-subline {
+  margin: 0 0 clamp(1.5rem, 3vw, 2.25rem);
+  max-width: 34ch;
+  font-size: clamp(0.92rem, 1.3vw, 1.05rem);
+  line-height: 1.5;
+  color: rgba(244, 244, 244, 0.82);
+}
+
+.ftr-root .ftr-connect {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+.ftr-root .ftr-connect .ftr-label {
+  margin-bottom: 0.35rem;
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-connect-link {
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  letter-spacing: -0.01em;
+  color: var(--ftr-text);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease, opacity 0.3s ease;
+}
+.ftr-root .ftr-connect-link:hover {
+  border-color: var(--ftr-field);
+}
+
+/* ----- RIGHT column — form ----- */
+.ftr-root .ftr-form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.1rem, 2.2vw, 1.6rem);
+}
+.ftr-root .ftr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.ftr-root .ftr-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+.ftr-root .ftr-flabel {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.6rem, 0.82vw, 0.7rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-req {
+  color: var(--ftr-text);
+}
+.ftr-root .ftr-opt {
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
+.ftr-root .ftr-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.65rem 0.1rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ftr-field);
+  border-radius: 0;
+  color: var(--ftr-text);
+  font-family: inherit;
+  font-size: clamp(0.95rem, 1.3vw, 1.05rem);
+  letter-spacing: -0.01em;
+  transition: border-color 0.3s ease;
+  appearance: none;
+}
+.ftr-root .ftr-input::placeholder {
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-input:focus {
+  outline: none;
+  border-bottom-color: var(--ftr-text);
+}
+.ftr-root .ftr-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ftr-root .ftr-input[aria-invalid='true'] {
+  border-bottom-color: #ff6b6b;
+}
+.ftr-root .ftr-textarea {
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.5;
+}
+.ftr-root .ftr-select {
+  cursor: pointer;
+  /* small chevron via background so the native arrow doesn't clash */
+  background-image: linear-gradient(45deg, transparent 50%, var(--ftr-muted) 50%),
+    linear-gradient(135deg, var(--ftr-muted) 50%, transparent 50%);
+  background-position: calc(100% - 14px) center, calc(100% - 9px) center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 1.75rem;
+}
+.ftr-root .ftr-select option {
+  color: #0a0a0a;
+}
+
+.ftr-root .ftr-error {
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: #ff8585;
+}
+
+.ftr-root .ftr-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+.ftr-root .ftr-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0.8rem 1.5rem;
+  background: var(--ftr-text);
+  color: var(--ftr-bg);
+  border: 1px solid var(--ftr-text);
+  border-radius: 999px;
+  font: inherit;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+}
+.ftr-root .ftr-submit:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ftr-text);
+}
+.ftr-root .ftr-submit:hover:not(:disabled) .ftr-submit-arrow {
+  transform: translateX(3px);
+}
+.ftr-root .ftr-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.ftr-root .ftr-submit-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.ftr-root .ftr-form-error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ff8585;
+}
+
+/* success panel (replaces the form) */
+.ftr-root .ftr-form-success {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-height: 120px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--ftr-line);
+  border-radius: 12px;
+}
+.ftr-root .ftr-success-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #4ade80;
+  color: #0a0a0a;
+  font-weight: 700;
+}
+.ftr-root .ftr-success-msg {
+  margin: 0;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  color: var(--ftr-text);
+}
+
+/* honeypot — fully off-screen, never seen, never tabbed to */
+.ftr-root .ftr-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* =====================================================
+   PART B — FOOTER GRID
+===================================================== */
+.ftr-root .ftr-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  position: relative;
+  padding: clamp(2.5rem, 5vw, 4rem) 0;
+}
+/* faint ＋ markers at the inner column intersections (decorative, scoped,
+   absolutely positioned so they can never push width) */
+.ftr-root .ftr-grid::before,
+.ftr-root .ftr-grid::after {
+  content: '＋';
+  position: absolute;
+  top: 0;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--ftr-muted);
+  opacity: 0.4;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.ftr-root .ftr-grid::before {
+  left: 50%;
+}
+.ftr-root .ftr-grid::after {
+  left: 25%;
+}
+
+.ftr-root .ftr-grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+.ftr-root .ftr-grid-label {
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-grid-logo {
+  font-family: 'LogoFont', 'Reem Kufi', 'Space Grotesk', system-ui, sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1;
+  color: var(--ftr-text);
+}
+.ftr-root .ftr-grid-tagline {
+  margin: 0;
+  max-width: 30ch;
+  font-size: clamp(0.85rem, 1.15vw, 0.95rem);
+  line-height: 1.5;
+  color: rgba(244, 244, 244, 0.78);
+}
+.ftr-root .ftr-grid-avail {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-grid-descriptor {
+  margin: 0;
+  max-width: 28ch;
+  font-size: clamp(0.85rem, 1.15vw, 0.95rem);
+  line-height: 1.5;
+  color: rgba(244, 244, 244, 0.78);
+}
+
+/* nav / social lists with thin dividers + trailing arrow */
+.ftr-root .ftr-navlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ftr-root .ftr-navlink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  min-height: 40px;
+  border-top: 1px solid var(--ftr-line-soft);
+  color: var(--ftr-text);
+  text-decoration: none;
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
+  opacity: 0.85;
+  transition: opacity 0.3s ease, padding-left 0.3s ease;
+}
+.ftr-root .ftr-navlist li:last-child .ftr-navlink {
+  border-bottom: 1px solid var(--ftr-line-soft);
+}
+.ftr-root .ftr-navlink:hover {
+  opacity: 1;
+  padding-left: 0.4rem;
+}
+.ftr-root .ftr-navarrow {
+  display: inline-block;
+  color: var(--ftr-muted);
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+.ftr-root .ftr-navlink:hover .ftr-navarrow {
+  color: var(--ftr-text);
+  transform: translate(2px, -2px);
+}
+
+.ftr-root .ftr-createdby {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+.ftr-root .ftr-createdby-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ftr-root .ftr-createdby-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ftr-text);
+}
+
+/* =====================================================
+   PART C — GIANT WORDMARK (closing signature)
+===================================================== */
+.ftr-root .ftr-wordmark {
+  margin: clamp(1.5rem, 3vw, 2.5rem) 0 0;
+}
+.ftr-root .ftr-wordmark-inner {
+  font-size: clamp(4.5rem, 25vw, 26rem);
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--ftr-text);
+  white-space: nowrap;
+}
+
+.ftr-root .ftr-sign-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-top: clamp(1.25rem, 2.5vw, 2rem);
+}
+.ftr-root .ftr-copy {
+  margin: 0;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.66rem, 0.95vw, 0.78rem);
+  letter-spacing: 0.04em;
+  color: var(--ftr-muted);
+}
+.ftr-root .ftr-toptop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.4rem 0.2rem;
+  margin: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.66rem, 0.95vw, 0.78rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ftr-text);
+  cursor: pointer;
+  opacity: 0.85;
+  border-bottom: 1px solid transparent;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+}
+.ftr-root .ftr-toptop:hover {
+  opacity: 1;
+  border-color: var(--ftr-field);
+}
+.ftr-root .ftr-toptop-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.ftr-root .ftr-toptop:hover .ftr-toptop-arrow {
+  transform: translateY(-3px);
+}
+
+/* ---------- focus + a11y helpers ---------- */
+.ftr-root .ftr-connect-link:focus-visible,
+.ftr-root .ftr-navlink:focus-visible,
+.ftr-root .ftr-submit:focus-visible,
+.ftr-root .ftr-toptop:focus-visible,
+.ftr-root .ftr-input:focus-visible {
+  outline: 2px solid var(--ftr-text);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.ftr-root .ftr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+@media (max-width: 900px) {
+  .ftr-root .ftr-contact {
+    grid-template-columns: 1fr;
+  }
+  .ftr-root .ftr-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.75rem, 4vw, 2.5rem);
+  }
+  /* drop the precise ＋ intersection markers on collapsed grids */
+  .ftr-root .ftr-grid::before,
+  .ftr-root .ftr-grid::after {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .ftr-root .ftr-label-row {
+    gap: 0.5rem;
+  }
+  .ftr-root .ftr-field-row {
+    grid-template-columns: 1fr;
+  }
+  .ftr-root .ftr-grid {
+    grid-template-columns: 1fr;
+  }
+  .ftr-root .ftr-submit {
+    width: 100%;
+    justify-content: center;
+  }
+  .ftr-root .ftr-sign-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .ftr-root .ftr-wordmark-inner {
+    font-size: clamp(3.2rem, 28vw, 9rem);
+  }
+}
+
+/* =====================================================
+   REDUCED MOTION — static, all visible (JS already bails)
+===================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .ftr-root .ftr-divider {
+    transform: none;
+  }
+  .ftr-root .ftr-submit,
+  .ftr-root .ftr-navlink,
+  .ftr-root .ftr-navarrow,
+  .ftr-root .ftr-submit-arrow,
+  .ftr-root .ftr-toptop-arrow {
+    transition: none;
+  }
+}

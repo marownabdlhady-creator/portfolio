@@ -1,0 +1,146 @@
+/* ================================================================
+   VIDEO → PROJECTS TRANSITION — scoped + namespaced.
+
+   EVERY rule is scoped under `.svc` and every class is prefixed `svc-`.
+   No global selectors (no body/html, no bare tags, no global overflow-x,
+   no imported fonts/colours). Nothing here can affect the hero, navbar,
+   menu, About, the marquee strip, or the Projects grid.
+
+   The media stage is position:sticky and the scrim is position:absolute
+   INSIDE it — nothing is position:fixed, so this can only affect its own
+   section. Everything is VISIBLE BY DEFAULT (safe fallback); the pre-
+   scroll hidden/offset state is applied by JS only.
+================================================================ */
+
+.svc {
+  /* ---- EXPOSED / inherited tokens (also set inline from JS) ------- */
+  --svc-scrim: rgba(10, 10, 10, 0.62); /* readability scrim strength */
+  --svc-reveal: 60svh; /* extra scroll length of the transition */
+  --svc-ink: #0a0a0a; /* site near-black */
+  --svc-paper: #ecebe9; /* site paper (section field around the card) */
+  --svc-on-video: #f4f2ee; /* light word colour (reads over the scrim) */
+  --svc-display-font: 'Anton', 'Space Grotesk', sans-serif; /* site display face */
+
+  position: relative;
+  z-index: 3; /* same layer as Projects — above the sticky hero (no bleed) */
+  background-color: var(--svc-paper);
+  color: var(--svc-ink);
+  overflow-x: clip; /* never contribute a PAGE horizontal scrollbar */
+}
+
+.svc *,
+.svc *::before,
+.svc *::after {
+  box-sizing: border-box;
+}
+
+/* ---- Media stage: tall, so the inner media can stay pinned ------- */
+.svc-stage {
+  position: relative;
+  /* one viewport of pinned media + the transition scroll distance */
+  height: calc(100svh + var(--svc-reveal));
+}
+
+.svc-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  width: 100%;
+  overflow: hidden; /* clip the full-bleed video to the viewport */
+  isolation: isolate; /* own stacking context for the scoped z-indexes */
+  background: var(--svc-paper); /* field the video card shrinks onto */
+  display: grid;
+  place-items: center;
+}
+
+/* ---- Video card (scales full-bleed → centred card) -------------- */
+.svc-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  /* default: full bleed (scale 1). JS scrubs it down. */
+}
+
+.svc-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fills the frame, no distortion */
+  display: block;
+  background: #0a0a0a; /* visible base if the video is slow/blocked */
+  pointer-events: none;
+}
+
+/* Readability scrim — darkest at centre (where the words sit), fading out
+   so the card's edges still show the footage. Visible by default (fallback);
+   JS fades it from 0 → 1 across the shrink. */
+.svc-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    72% 72% at 50% 50%,
+    var(--svc-scrim) 0%,
+    transparent 72%
+  );
+  opacity: 1;
+}
+
+/* ---- Converging words = the "Show Projects" link ---------------- */
+.svc-cta {
+  position: relative; /* centred by the sticky grid */
+  z-index: 2; /* above the video + scrim */
+  display: flex;
+  flex-wrap: wrap; /* stack on very narrow screens, stays readable/tappable */
+  justify-content: center;
+  align-items: center;
+  gap: 0.35em; /* comfortable gap between the two words */
+  max-width: min(92vw, 60ch);
+  padding: 0.4em 0.6em;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--svc-display-font);
+  font-weight: 400;
+  font-size: clamp(2rem, 8vw, 5.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: var(--svc-on-video);
+  /* soft halo as a second layer of legibility insurance over the video */
+  text-shadow: 0 2px 24px rgba(10, 10, 10, 0.45);
+  transition: opacity 0.3s ease;
+}
+
+.svc-word {
+  display: block;
+  /* visible by default; JS sets the off-centre/hidden start state */
+}
+
+/* Subtle, tasteful hover/focus. */
+@media (hover: hover) {
+  .svc-cta:hover {
+    opacity: 0.82;
+  }
+}
+.svc-cta:focus-visible {
+  outline: 2px solid var(--svc-on-video);
+  outline-offset: 8px;
+  border-radius: 2px;
+}
+
+/* ================================================================
+   REDUCED MOTION — no shrink, no word-slide. CSS defaults already show
+   the full video + scrim + a centred, readable "Show Projects" link
+   (JS also early-returns), so everything is fully visible/usable.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .svc-frame {
+    transform: none !important;
+  }
+  .svc-cta {
+    transition: none;
+  }
+}

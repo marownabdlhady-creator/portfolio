@@ -1,0 +1,695 @@
+/* ================================================================
+   HERO — light editorial Surface over a dark blueprint System,
+   joined by a draggable peel seam.
+
+   Animated properties are transform / opacity / clip-path (plus a brief
+   filter blur on the load reveal) so compositing stays on the GPU and
+   dragging never reflows.
+
+   Shared spacing token keeps both layers on the SAME grid.
+================================================================ */
+.hero {
+  --pad: clamp(1.1rem, 3.2vw, 2.6rem);
+  --nav-clear: clamp(4.4rem, 10vh, 6.4rem);
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ================================================================
+   THE SIGNATURE — two absolutely-stacked, full-bleed layers.
+================================================================ */
+.signature {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  will-change: transform, opacity;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* SYSTEM sits underneath, full size, always alive. */
+.layer--system {
+  z-index: 1;
+  background: var(--ink);
+  color: var(--bg);
+  /* faint blueprint dot-grid */
+  background-image: radial-gradient(
+    rgba(244, 242, 238, 0.07) 1px,
+    transparent 1px
+  );
+  background-size: 26px 26px;
+}
+
+/* SURFACE sits on top and is clipped from the left by the seam. */
+.layer--surface {
+  z-index: 2;
+  background: var(--bg);
+  clip-path: inset(0px 0px 0px 0px); /* JS drives the left inset */
+  will-change: clip-path;
+}
+
+/* faint editorial column grid on the surface */
+.hero__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--grid) 0,
+    var(--grid) 1px,
+    transparent 1px,
+    transparent 25%
+  );
+}
+
+/* ================================================================
+   STAGE — identical deterministic layout in BOTH layers so the
+   headline lands in the exact same place. Status is anchored top,
+   the headline is centred, the footer is anchored bottom — none of
+   them depend on each other's height, which guarantees alignment.
+================================================================ */
+.hero__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.hero__status {
+  position: absolute;
+  top: var(--nav-clear);
+  left: var(--pad);
+  right: var(--pad);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.58rem, 1.25vw, 0.76rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  will-change: transform, opacity;
+}
+
+/* the headline box — centred identically in both layers */
+.hero__main {
+  position: absolute;
+  top: 50%;
+  left: var(--pad);
+  right: var(--pad);
+  transform: translateY(-50%);
+}
+
+.hero__footer {
+  position: absolute;
+  left: var(--pad);
+  right: var(--pad);
+  bottom: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+/* shared mono micro-type */
+.hero__intro-tag,
+.hero__intro-counter,
+.hero__logo,
+.hero__burger-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.6rem, 1.3vw, 0.78rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ---------------- Nav (logo + menu button) ----------------
+   No mix-blend-mode: each element flips between a dark and a light
+   token (driven from JS) so it is always readable + on-brand. */
+.hero__nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999; /* above the menu panel so the button can close it */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: clamp(1.1rem, 3.2vw, 2.2rem) var(--pad);
+}
+
+.hero__logo,
+.hero__burger {
+  color: var(--ink);
+  transition: color 0.4s var(--ease);
+}
+.hero__logo.is-light,
+.hero__burger.is-light {
+  color: var(--bg);
+}
+
+.hero__logo {
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  will-change: transform, opacity;
+}
+.hero__logo-mark {
+  color: var(--accent); /* brand colour now always visible */
+}
+
+/* MENU / CLOSE button with a morphing icon */
+.hero__burger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0;
+  border: 0;
+  background: none;
+  will-change: transform, opacity;
+}
+@media (hover: hover) and (pointer: fine) {
+  .hero__burger {
+    cursor: none;
+  }
+}
+.hero__burger-label {
+  color: inherit;
+}
+.hero__burger-icon {
+  position: relative;
+  width: 26px;
+  height: 12px;
+}
+.hero__burger-icon span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transition: transform 0.45s var(--ease);
+  will-change: transform;
+}
+.hero__burger-icon span:nth-child(1) {
+  top: 0;
+}
+.hero__burger-icon span:nth-child(2) {
+  bottom: 0;
+}
+.hero__burger.is-open .hero__burger-icon span:nth-child(1) {
+  transform: translateY(5px) rotate(45deg);
+}
+.hero__burger.is-open .hero__burger-icon span:nth-child(2) {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+/* availability status + radar-ping dot (the only ambient micro-motion) */
+.hero__pulse {
+  position: relative;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.hero__pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  will-change: transform, opacity;
+}
+
+/* ---------------- Display headline (shared by both layers) ---------------- */
+.hero__heading {
+  margin: 0;
+  font-family: 'Anton', 'Space Grotesk', sans-serif;
+  font-weight: 400; /* Anton is single-weight */
+  text-transform: uppercase;
+  font-size: clamp(4rem, 20vw, 17rem);
+  line-height: 0.82;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.hero__line {
+  display: block;
+}
+.hero__word {
+  display: inline-block;
+}
+.char {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  /* breathing room so tall caps aren't clipped by the reveal mask */
+  padding-top: 0.08em;
+  margin-top: -0.08em;
+}
+.char-inner {
+  display: inline-block;
+  will-change: transform, filter;
+  transition: color 0.4s var(--ease), -webkit-text-stroke 0.4s var(--ease);
+}
+
+/* hovering a Surface word flips it from solid ink to an accent outline */
+@media (hover: hover) and (pointer: fine) {
+  .layer--surface .hero__word:hover .char-inner {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--accent);
+  }
+}
+
+/* ---------------- Divider + footer copy (surface) ---------------- */
+.hero__divider {
+  height: 1px;
+  width: 100%;
+  background: var(--line);
+  transform-origin: left center;
+  will-change: transform;
+}
+.hero__sub {
+  margin: 0;
+  max-width: 40ch;
+  font-size: clamp(0.95rem, 2.1vw, 1.15rem);
+  line-height: 1.5;
+  color: #2a2926;
+  will-change: transform, opacity;
+}
+.hero__sub em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+/* Magnetic CTA */
+.hero__cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  border: 1px solid var(--ink);
+  border-radius: 100px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  will-change: transform;
+  overflow: hidden;
+  isolation: isolate;
+}
+.hero__cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: translateY(101%);
+  transition: transform 0.45s var(--ease);
+}
+.hero__cta:hover {
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.hero__cta:hover::before {
+  transform: translateY(0);
+}
+.hero__cta-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  will-change: transform;
+}
+.hero__cta-arrow {
+  transition: transform 0.4s var(--ease);
+}
+.hero__cta:hover .hero__cta-arrow {
+  transform: translateX(6px);
+}
+
+/* ================================================================
+   SYSTEM LAYER — blueprint-elegant: muted mono with cobalt accents.
+   Everything references the REAL structure of this hero only.
+================================================================ */
+.hero__stage--system {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* component tree (sits where the Surface status sits) */
+.sys__tree {
+  position: absolute;
+  top: var(--nav-clear);
+  left: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+  font-size: clamp(0.62rem, 1.15vw, 0.78rem);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: rgba(244, 242, 238, 0.5);
+  white-space: pre;
+}
+.sys__line {
+  display: block;
+}
+
+/* the streamed headline — same box as the Surface h1, plus a guide. */
+.hero__heading.is-system {
+  color: var(--bg);
+  /* outline (not border) so the dashed guide never shifts the layout */
+  outline: 1px dashed rgba(244, 242, 238, 0.26);
+  outline-offset: 0.16em;
+}
+.hero__heading.is-system .char-inner {
+  opacity: 0;
+  transform: translateY(0.14em);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  color: var(--bg);
+}
+.hero__heading.is-system .char.is-on .char-inner {
+  opacity: 1;
+  transform: none;
+}
+
+/* the streaming caret — blinks only while generating */
+.sys-caret {
+  display: inline-block;
+  width: 0.06em;
+  height: 0.74em;
+  margin: 0 0.05em;
+  background: var(--accent);
+  vertical-align: baseline;
+  animation: sysCaret 1s steps(1) infinite;
+}
+@keyframes sysCaret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* dimension label pinned to the headline box */
+.sys__dim {
+  position: absolute;
+  top: -1.6em;
+  right: 0;
+  font-size: clamp(0.55rem, 1vw, 0.7rem);
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+/* subtle data line: a baseline guide with measurement ticks */
+.sys__data {
+  position: absolute;
+  left: var(--pad);
+  right: var(--pad);
+  top: calc(50% + clamp(7rem, 26vh, 12rem));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  color: rgba(244, 242, 238, 0.4);
+}
+.sys__data-label {
+  font-size: clamp(0.55rem, 1vw, 0.7rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sys__data-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  height: 12px;
+  border-bottom: 1px solid rgba(244, 242, 238, 0.18);
+}
+.sys__data-line i {
+  flex: 1;
+  height: 5px;
+  border-left: 1px solid rgba(244, 242, 238, 0.18);
+}
+.sys__data-line i:nth-child(4n + 1) {
+  height: 10px;
+  border-left-color: rgba(139, 147, 255, 0.55);
+}
+
+/* the actual JSX code that renders the headline */
+.sys__footer {
+  gap: 0;
+}
+.sys__code {
+  margin: 0;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.6rem, 1.05vw, 0.74rem);
+  line-height: 1.55;
+  white-space: pre;
+  color: rgba(244, 242, 238, 0.45);
+}
+.sys__code-line {
+  display: block;
+}
+.sys__code--mini {
+  display: none; /* shown only on small screens */
+}
+.sy-kw,
+.sy-fn {
+  color: #8b93ff; /* brightened cobalt for legibility on dark */
+}
+.sy-str {
+  color: rgba(244, 242, 238, 0.82);
+}
+.sy-tag {
+  color: rgba(244, 242, 238, 0.85);
+}
+.sy-attr {
+  color: rgba(244, 242, 238, 0.5);
+}
+.sy-branch {
+  color: rgba(244, 242, 238, 0.32);
+}
+.sy-comment {
+  color: rgba(139, 147, 255, 0.6);
+  font-style: italic;
+}
+
+/* ================================================================
+   THE SEAM — thin line + grip handle. Translated in X (no reflow).
+================================================================ */
+.seam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  z-index: 6;
+  will-change: transform;
+}
+/* invisible wide hit-rail for easy grabbing */
+.seam__rail {
+  position: absolute;
+  top: 0;
+  left: -13px;
+  width: 26px;
+  height: 100%;
+  cursor: ew-resize;
+}
+.seam__line {
+  position: absolute;
+  top: 0;
+  left: -0.75px;
+  width: 1.5px;
+  height: 100%;
+  background: var(--accent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.seam__grip {
+  position: absolute;
+  top: 50%;
+  left: -18px;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: 0 4px 18px rgba(10, 10, 10, 0.18);
+  cursor: grab;
+}
+.seam.is-grabbing .seam__grip {
+  cursor: grabbing;
+}
+.seam__grip svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* one-time discoverability label, fades out after first interaction */
+.seam__hint {
+  position: absolute;
+  top: 50%;
+  left: 28px;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+  pointer-events: none;
+}
+/* shown once the entrance is done, hidden permanently after first interaction */
+.seam.is-hinting:not(.is-touched) .seam__hint {
+  opacity: 1;
+}
+
+/* ---------------- Custom cursor ---------------- */
+.hero__cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--accent);
+  pointer-events: none;
+  z-index: 10000;
+  mix-blend-mode: difference;
+  will-change: transform;
+}
+
+/* ---------------- Intro overlay ---------------- */
+.hero__intro {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: var(--ink);
+  color: var(--bg);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: var(--pad);
+  will-change: transform;
+}
+.hero__intro-tag {
+  color: var(--bg);
+  opacity: 0.7;
+}
+.hero__intro-counter {
+  font-size: clamp(3rem, 12vw, 9rem);
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* No custom cursor on touch devices */
+@media (hover: none), (pointer: coarse) {
+  .hero__cursor {
+    display: none;
+  }
+}
+
+/* ================================================================
+   RESPONSIVE — the System layer simplifies when cramped, and the
+   surface footer relaxes onto one row on wider screens.
+================================================================ */
+@media (min-width: 768px) {
+  .hero__footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+  }
+  .hero__sub {
+    max-width: 34ch;
+  }
+  /* the divider spans the row above the footer content */
+  .sys__footer {
+    align-items: flex-end;
+  }
+}
+
+@media (max-width: 767px) {
+  /* drop the least-important blueprint details first */
+  .sys__tree,
+  .sys__data {
+    display: none;
+  }
+  /* code block collapses to just the headline's line */
+  .sys__code--full {
+    display: none;
+  }
+  .sys__code--mini {
+    display: block;
+  }
+  /* keep the dimension label from crowding the type */
+  .sys__dim {
+    font-size: 0.55rem;
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION — finished Surface, a static visible handle, the
+   System reachable by drag/toggle with no motion flourish.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .hero__cursor,
+  .hero__intro,
+  .hero__pulse-ring {
+    display: none; /* static availability dot, no ping */
+  }
+  .hero__heading.is-system .char-inner {
+    transition: none;
+  }
+  .sys-caret {
+    display: none;
+  }
+  .hero__cta::before,
+  .hero__burger-icon span,
+  .hero__logo,
+  .hero__burger {
+    transition: none;
+  }
+}
+
+/* ================================================================
+   Spacer section after the hero (room for the pinned scroll).
+================================================================ */
+.next-section {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: clamp(1.1rem, 3.2vw, 2.6rem);
+  background: var(--ink);
+  color: var(--bg);
+}
+.next-section h2 {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: clamp(2.5rem, 9vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: -0.01em;
+}
+.next-section p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9a978f;
+}

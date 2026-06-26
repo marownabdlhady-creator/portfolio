@@ -1,0 +1,181 @@
+/* ================================================================
+   FULLSCREEN MENU — minimal Swiss, purely typographic.
+   Layers (back → front):
+     .menu__panel  near-black surface that WIPES across (clip-path)
+     .menu__inner  links (left) + meta — right side stays empty space
+   Only transform / opacity / clip-path animate (GPU, 60fps).
+================================================================ */
+.menu {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  color: #f4f2ee; /* white type on near-black */
+  pointer-events: none; /* closed: click-through to the hero */
+}
+.menu.is-open {
+  pointer-events: auto;
+}
+
+/* ---------------- Panel (the wiping surface) ----------------
+   GSAP wipes this in via clip-path on a soft, slow ease. Default
+   (and reduced-motion) state is fully shown. */
+.menu__panel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--overlay, #0a0a0a);
+  clip-path: inset(0% 0% 0% 0%);
+  will-change: clip-path;
+}
+
+/* ---------------- Content shell ---------------- */
+.menu__inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* top padding clears the fixed nav; generous side margins = negative space */
+  padding: clamp(5rem, 13vh, 8rem) clamp(1.3rem, 4vw, 3.5rem)
+    clamp(1.6rem, 4.5vh, 3rem);
+}
+
+/* ---------------- Links ---------------- */
+.menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertically centred block of links */
+  align-items: flex-start; /* left-aligned, breathing on the right */
+  gap: clamp(0.6rem, 2.2vh, 1.5rem); /* generous line spacing — easy to scan */
+}
+
+.menu__link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: clamp(0.7rem, 2vw, 1.6rem);
+  width: fit-content; /* hit area hugs the type — quiet, not full-bleed */
+  opacity: 1;
+  transition: opacity 0.3s var(--ease); /* soft dim/restore on hover */
+}
+
+.menu__index {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.62rem, 1.4vw, 0.82rem);
+  letter-spacing: 0.12em;
+  color: rgba(244, 242, 238, 0.45); /* muted grey — monochrome */
+  transform: translateY(-0.35em); /* sit the index up by the cap line */
+}
+
+/* mask clips the rising letters (open) — overflow hidden hides them when down */
+.menu__link-mask {
+  display: block;
+  overflow: hidden;
+  line-height: 0.94;
+  padding-bottom: 0.06em;
+}
+.menu__link-inner {
+  display: block;
+  will-change: transform;
+}
+
+/* The label — strong grotesk, large + bold, tight. */
+.menu__link-fx {
+  display: block;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(2.6rem, 9vw, 6.5rem);
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+  color: #f4f2ee;
+}
+
+/* HOVER — the one quiet effect: hovered link stays white, the rest dim.
+   (Only on real pointers; touch keeps every link fully legible.) */
+@media (hover: hover) and (pointer: fine) {
+  .menu__list:hover .menu__link {
+    opacity: var(--dim, 0.4);
+  }
+  .menu__list:hover .menu__link:hover {
+    opacity: 1;
+  }
+}
+.menu__link:focus-visible {
+  outline: 1.5px solid #f4f2ee;
+  outline-offset: 6px;
+}
+
+/* ---------------- Meta row (understated footer) ---------------- */
+.menu__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(0.72rem, 1.6vw, 0.88rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(244, 242, 238, 0.6);
+}
+.menu__email {
+  color: #f4f2ee;
+  width: fit-content;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.4s var(--ease);
+}
+.menu__email:hover {
+  border-color: #f4f2ee;
+}
+.menu__socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+.menu__socials a {
+  transition: color 0.4s var(--ease);
+}
+.menu__socials a:hover {
+  color: #f4f2ee;
+}
+
+@media (min-width: 768px) {
+  .menu__meta {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION — SKIP the wipe + stagger. The menu shows / hides
+   with a simple, fast fade; every layer renders at its final state.
+   Functionality is identical.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    opacity: 0;
+    transition: opacity 0.2s linear;
+  }
+  .menu.is-open {
+    opacity: 1;
+  }
+  .menu__panel {
+    clip-path: inset(0% 0% 0% 0%);
+  }
+  .menu__link-inner {
+    transform: none !important;
+  }
+  .menu__meta {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .menu__link,
+  .menu__email,
+  .menu__socials a {
+    transition: none;
+  }
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="مروان">
+  <!-- Swiss minimal: solid black rounded tile, bold white Arabic meem (م)
+       centered with generous padding. Black & white only, no gradients.
+       The meem is set as text in a common system Arabic font stack and
+       given a matching white stroke so it stays bold and legible at ~16px. -->
+  <rect width="100" height="100" rx="22" fill="#000000"/>
+  <text x="50" y="54"
+        text-anchor="middle"
+        dominant-baseline="central"
+        font-size="68"
+        font-weight="700"
+        fill="#ffffff"
+        stroke="#ffffff"
+        stroke-width="2"
+        font-family="'Segoe UI', 'Geeza Pro', 'Noto Naskh Arabic', 'Noto Sans Arabic', Tahoma, sans-serif">م</text>
+</svg>

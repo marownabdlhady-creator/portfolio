@@ -1,0 +1,67 @@
+/* ================================================================
+   CUSTOM CURSOR — scoped + namespaced (`mcur-`).
+
+   The fixed root + high z-index are REQUIRED for a cursor and are safe
+   because pointer-events:none guarantees it never intercepts input. The
+   ONLY global rule is the gated `html.mcur-on ... { cursor: none }` at the
+   bottom — added by JS only after the custom cursor is active, removed on
+   any error/cleanup so the native cursor always returns.
+
+   mix-blend-mode: difference lives ONLY on the cursor elements, so the
+   white cursor auto-inverts against light sections, dark sections, the
+   navbar pill, images, and the Day→Night wipe — never on any section.
+================================================================ */
+
+.mcur-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none; /* REQUIRED: the cursor is inert to all input */
+  z-index: 99999;
+  will-change: transform;
+}
+
+.mcur-dot,
+.mcur-ring,
+.mcur-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  mix-blend-mode: var(--mcur-blend, difference);
+}
+
+.mcur-dot {
+  width: var(--mcur-dot, 7px);
+  height: var(--mcur-dot, 7px);
+  border-radius: 50%;
+  background: var(--mcur-color, #fff);
+}
+
+.mcur-ring {
+  width: var(--mcur-ring, 38px);
+  height: var(--mcur-ring, 38px);
+  border-radius: 50%;
+  border: var(--mcur-ring-border, 1.5px) solid var(--mcur-color, #fff);
+  background: none;
+}
+
+.mcur-label {
+  color: var(--mcur-color, #fff);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0; /* shown only in data-cursor="view" state, via JS */
+}
+
+/* ---- The ONLY global rule: gated native-cursor hide ----------------
+   Added by JS (class on <html>) ONLY while the custom cursor is active;
+   removed on cleanup/error so the native cursor always comes back. Only
+   affects the `cursor` property — no layout/visual risk. */
+html.mcur-on,
+html.mcur-on * {
+  cursor: none;
+}

@@ -1,0 +1,308 @@
+/* ================================================================
+   PROJECTS — "THE INDEX": a giant editorial project list. Each project is
+   huge Anton display type on a ruled row; on a fine pointer, hovering a row
+   dims the others, washes the name in cobalt, slides it right, and reveals a
+   cursor-following media preview (the project screenshot). Touch/mobile show
+   an inline thumbnail instead.
+
+   EVERY rule is scoped under `.pidx-root` (the list) or `.pidx-preview`
+   (the one fixed preview) and every class is prefixed `pidx-`. No global
+   selectors (no bare img/a/div/section/*, no body, no html, no ::selection).
+
+   The single `position: fixed` here is the floating preview — it is
+   aria-hidden, pointer-events:none, hidden unless a row is hovered, and sits
+   BELOW the nav/compact-nav/cursor. It mirrors the cursor's safety model and
+   cannot affect any other section.
+
+   Rows are VISIBLE BY DEFAULT (no opacity:0 / hidden waiting on JS). Reveal
+   start-states are applied by JS only and cleared on complete. Motion is
+   transform/opacity only → GPU-friendly, 60fps.
+================================================================ */
+
+.pidx-root {
+  display: block;
+  width: auto;
+  max-width: none;
+  margin: 0;
+}
+
+/* Scoped box-sizing (only descendants of .pidx-root — cannot leak). */
+.pidx-root *,
+.pidx-root *::before,
+.pidx-root *::after {
+  box-sizing: border-box;
+}
+
+/* ---- Eyebrow: "Selected Work" ............... (06) -------------- */
+.pidx-root .pidx-eyebrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(1.25rem, 3vh, 2.5rem);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.68rem, 1vw, 0.8rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pidx-muted, #6b6862);
+}
+.pidx-root .pidx-eyebrow-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- The list ------------------------------------------------- */
+.pidx-root .pidx-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Row = the whole card is a link; a ruled, full-width line ---- */
+.pidx-root .pidx-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto; /* number | name | meta(cat + arrow) */
+  align-items: center;
+  column-gap: clamp(1rem, 3vw, 3.5rem);
+  padding: clamp(1.1rem, 2.8vw, 2.6rem) 0;
+  text-decoration: none;
+  color: var(--pjx-ink, #0a0a0a);
+  outline: none;
+  isolation: isolate; /* keep the in-row layers self-contained */
+}
+
+/* Divider rule — sits at the TOP of each row; the closing one after the last
+   row. Drawn on scroll via scaleX (origin set by JS). transform-only. */
+.pidx-root .pidx-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--pidx-line, rgba(10, 10, 10, 0.16));
+  transform-origin: left center;
+}
+.pidx-root .pidx-line--end {
+  position: relative; /* flows after the last row to close the list */
+}
+
+/* ---- Index number ---- */
+.pidx-root .pidx-num {
+  align-self: center;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.7rem, 1vw, 0.85rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  color: var(--pidx-muted, #6b6862);
+  transition: color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
+  min-width: 1.5em;
+}
+
+/* ---- Name — the big editorial display type ---- */
+.pidx-root .pidx-name-wrap {
+  min-width: 0;
+  /* SplitText masks each char to its own clip-box; keep risers contained. */
+  overflow: hidden;
+  padding: 0.08em 0; /* breathing room so descenders/ascenders aren't clipped */
+}
+.pidx-root .pidx-name {
+  display: block;
+  margin: 0;
+  font-family: var(--pjx-display-font, 'Anton', 'Space Grotesk', sans-serif);
+  font-weight: 400;
+  font-size: clamp(2rem, 8vw, 6.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  color: var(--pjx-ink, #0a0a0a);
+  white-space: nowrap;
+  will-change: transform, color;
+  transition:
+    color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform 0.55s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* ---- Meta (category / year + arrow) ---- */
+.pidx-root .pidx-rowmeta {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.6vw, 1.6rem);
+  justify-self: end;
+}
+.pidx-root .pidx-cat {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(0.68rem, 1vw, 0.82rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--pidx-muted, #6b6862);
+  transition: color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+.pidx-root .pidx-arrow {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: clamp(1.4rem, 2.4vw, 2.2rem);
+  height: clamp(1.4rem, 2.4vw, 2.2rem);
+  color: var(--pjx-ink, #0a0a0a);
+  transition:
+    transform 0.5s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),
+    color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* ---- Inline thumbnail — MOBILE/touch only (hidden on desktop) ---- */
+.pidx-root .pidx-thumb {
+  display: none;
+}
+
+/* ================================================================
+   HOVER STATE — pure CSS (desktop/fine pointer only). Works even if the
+   preview JS never runs: dim the siblings, wash + slide the hovered name,
+   kick the arrow. The cursor-following image is the JS layer on top.
+================================================================ */
+@media (hover: hover) and (pointer: fine) {
+  .pidx-root .pidx-list:hover .pidx-row {
+    opacity: 0.32;
+    transition: opacity 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+  .pidx-root .pidx-list:hover .pidx-row:hover {
+    opacity: 1;
+  }
+  .pidx-root .pidx-row:hover .pidx-name {
+    color: var(--pidx-accent, #2b2bff);
+    transform: translateX(clamp(0.75rem, 2.5vw, 2.75rem));
+  }
+  .pidx-root .pidx-row:hover .pidx-num,
+  .pidx-root .pidx-row:hover .pidx-cat {
+    color: var(--pidx-accent, #2b2bff);
+  }
+  .pidx-root .pidx-row:hover .pidx-arrow {
+    color: var(--pidx-accent, #2b2bff);
+    transform: translate(0.28em, -0.28em);
+  }
+}
+
+/* ---- Visible keyboard focus (no mouse) ---- */
+.pidx-root .pidx-row:focus-visible {
+  outline: 2px solid var(--pidx-accent, #2b2bff);
+  outline-offset: 4px;
+  border-radius: 3px;
+}
+.pidx-root .pidx-row:focus-visible .pidx-name {
+  color: var(--pidx-accent, #2b2bff);
+}
+
+/* ================================================================
+   FLOATING PREVIEW — the one fixed element. Trails the cursor (JS), shown
+   only while a row is hovered. pointer-events:none so it never intercepts
+   anything; z-index below the compact nav (9980) and cursor (99999).
+================================================================ */
+.pidx-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  width: clamp(260px, 26vw, 460px);
+  aspect-ratio: 4 / 3;
+  pointer-events: none;
+  will-change: transform, opacity;
+  visibility: hidden; /* JS reveals via autoAlpha once a row is hovered */
+}
+.pidx-preview *,
+.pidx-preview *::before,
+.pidx-preview *::after {
+  box-sizing: border-box;
+}
+.pidx-preview-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #141414;
+  box-shadow:
+    0 24px 60px -20px rgba(10, 10, 10, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.pidx-preview-media {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.pidx-preview-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ================================================================
+   RESPONSIVE — phones (≤640px): the cursor-preview has no place on touch,
+   so each row becomes a stacked card with an INLINE thumbnail. The list
+   stays a real, tappable index.
+================================================================ */
+@media (max-width: 640px) {
+  .pidx-root .pidx-row {
+    grid-template-columns: 1fr auto; /* name spans; meta to the right */
+    grid-template-areas:
+      'num    meta'
+      'name   name'
+      'thumb  thumb';
+    align-items: center;
+    row-gap: clamp(0.85rem, 3vw, 1.25rem);
+    padding: clamp(1.4rem, 6vw, 2rem) 0;
+  }
+  .pidx-root .pidx-num {
+    grid-area: num;
+  }
+  .pidx-root .pidx-rowmeta {
+    grid-area: meta;
+  }
+  .pidx-root .pidx-name-wrap {
+    grid-area: name;
+  }
+  .pidx-root .pidx-name {
+    font-size: clamp(2.4rem, 13vw, 4rem);
+    white-space: normal; /* allow long names to wrap on narrow phones */
+  }
+  .pidx-root .pidx-thumb {
+    grid-area: thumb;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #141414;
+  }
+  .pidx-root .pidx-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* The fixed preview never shows on touch. */
+  .pidx-preview {
+    display: none;
+  }
+}
+
+/* Coarse pointers (touch) of any width: no floating preview, no hover wash. */
+@media (hover: none) {
+  .pidx-preview {
+    display: none;
+  }
+}
+
+/* ================================================================
+   REDUCED MOTION — JS already skips reveal + preview. Kill the hover/transform
+   transitions so the static list simply shows.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .pidx-root .pidx-name,
+  .pidx-root .pidx-num,
+  .pidx-root .pidx-cat,
+  .pidx-root .pidx-arrow,
+  .pidx-root .pidx-list:hover .pidx-row {
+    transition: none;
+  }
+  .pidx-preview {
+    display: none;
+  }
+}

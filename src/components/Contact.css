@@ -1,0 +1,192 @@
+/* ================================================================
+   CONTACT — cinematic finale (LIGHT/WHITE). SCOPED STYLES.
+
+   Every selector is namespaced `ctc-` and scoped under `.ctc-root`.
+   No global/body/html rules, no bare element selectors, no `*` leakage,
+   NO position:fixed (native sticky only). Content is VISIBLE BY DEFAULT —
+   the static END state (full-bleed video/poster + light scrim + readable
+   line + clickable button) is the CSS baseline. JS applies the small-window
+   clip + hidden start-states. Animated props are clip-path / opacity /
+   transform ONLY → 60fps.
+================================================================ */
+
+.ctc-root {
+  /* config-driven custom props (set inline; safe fallbacks here) */
+  --ctc-bg: #ffffff;
+  --ctc-text: #0a0a0a;
+  --ctc-muted: #6b6b6b;
+  --ctc-runway: 250vh;
+  --ctc-grayscale: none;
+  --ctc-scrim-opacity: 0.15;
+
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  /* tall section = scroll room for the sticky stage (the "held" feel) */
+  height: var(--ctc-runway);
+  background: var(--ctc-bg);
+  color: var(--ctc-text);
+  /* clip (not hidden) so the sticky stage inside still works smoothly */
+  overflow: clip;
+  z-index: 3; /* sit above the sticky hero like the other opaque sections */
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ctc-root *,
+.ctc-root *::before,
+.ctc-root *::after {
+  box-sizing: border-box;
+}
+
+/* Accessible heading, visually hidden. */
+.ctc-root .ctc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- STAGE — native position:sticky, held while root scrolls ---------- */
+.ctc-root .ctc-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ctc-bg);
+}
+
+/* ---------- MEDIA — always full-viewport; only clip-path changes ----------
+   DEFAULT (no JS): full bleed, no clip. JS applies the small start window. */
+.ctc-root .ctc-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: var(--ctc-grayscale);
+  background: #000; /* letterbox/edge colour while the poster/video loads */
+  user-select: none;
+  pointer-events: none; /* clicks/hover pass to the stage (cursor view-state) */
+  /* clip-path is JS-driven; default (none) = full bleed for the no-JS case */
+  will-change: clip-path;
+}
+
+/* ---------- SCRIM — LIGHT translucent overlay (softens video edges only) ----------
+   DEFAULT (no JS): visible at config opacity. JS starts it at 0 and fades in.
+   This is NOT for text legibility — the content chip guarantees that. */
+.ctc-root .ctc-scrim {
+  position: absolute;
+  inset: 0;
+  opacity: var(--ctc-scrim-opacity);
+  background:
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.12) 45%,
+      rgba(255, 255, 255, 0.28) 100%
+    );
+  pointer-events: none;
+}
+
+/* ---------- CONTENT — line + button in a SOLID white chip ----------
+   DEFAULT (no JS): fully visible, readable, clickable (static end state). JS
+   starts it hidden (opacity 0 / y 24) and rises it in EARLY, then it stays.
+   The solid white chip keeps near-black copy legible over BOTH the white
+   section and the full-bleed video (contrast ≥4.5:1 at every scroll position). */
+.ctc-root .ctc-content {
+  position: absolute;
+  left: clamp(1.25rem, 6vw, 6rem);
+  bottom: clamp(2rem, 7vw, 6rem);
+  z-index: 2;
+  max-width: min(34rem, calc(100% - 2.5rem));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(1rem, 2.5vw, 1.6rem);
+  padding: clamp(1.4rem, 3vw, 2.2rem);
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(10, 10, 10, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.35);
+}
+
+.ctc-root .ctc-line {
+  margin: 0;
+  font-size: clamp(1.25rem, 3vw, 2.1rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: var(--ctc-text);
+  text-wrap: balance;
+}
+
+/* ---------- BUTTON — Swiss/minimal solid fill; invert on hover ---------- */
+.ctc-root .ctc-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 48px; /* comfortable touch target */
+  padding: 0.85rem 1.5rem;
+  background: var(--ctc-text);
+  color: var(--ctc-bg);
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--ctc-text);
+  border-radius: 999px;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+.ctc-root .ctc-cta:hover {
+  background: transparent;
+  color: var(--ctc-text);
+  transform: translateY(-2px);
+}
+.ctc-root .ctc-cta-arrow {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+.ctc-root .ctc-cta:hover .ctc-cta-arrow {
+  transform: translate(2px, -2px);
+}
+
+/* Crisp, visible focus outline over either backdrop (no focus trap). */
+.ctc-root .ctc-cta:focus-visible {
+  outline: 2px solid var(--ctc-text);
+  outline-offset: 3px;
+}
+
+/* ---------- RESPONSIVE — small screens ---------- */
+@media (max-width: 640px) {
+  .ctc-root {
+    /* a touch less runway on phones keeps the grow snappy */
+    --ctc-runway: 220vh;
+  }
+  .ctc-root .ctc-content {
+    left: clamp(0.9rem, 4vw, 1.25rem);
+    right: clamp(0.9rem, 4vw, 1.25rem);
+    bottom: clamp(1.25rem, 6vw, 2rem);
+    max-width: none;
+  }
+  .ctc-root .ctc-cta {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ---------- REDUCED MOTION — static end state, no motion ----------
+   JS already bails under reduced-motion (CSS default = full-bleed video/poster
+   + light scrim + visible readable content). No motion-only elements remain. */
+@media (prefers-reduced-motion: reduce) {
+  .ctc-root .ctc-media {
+    will-change: auto;
+  }
+}

@@ -1,0 +1,140 @@
+/* ================================================================
+   MARQUEE STRIP — near-white divider section that COVERS About on
+   scroll (sticky cover wired in App.css). An outlined rounded band
+   clips a seamless horizontal marquee; a small "↳ Projects" label
+   sits below. Only transform / opacity / clip-path animate (60fps).
+================================================================ */
+.strip {
+  position: relative;
+  z-index: 2; /* ABOVE the pinned About (.about-cover is z 1) */
+  /* Content-sized (NOT a forced 100svh): the section is exactly the marquee
+     band + comfortable padding, with NO empty reserved band below it — so the
+     reveal section that follows sits directly under the strip with no gap. The
+     hero stays covered regardless: About → strip → reveal are contiguous and
+     all opaque (every selector here is z ≥ 1 over the sticky hero at z 0), so
+     some opaque panel always fills the viewport. No empty Projects area yet. */
+  background: var(--strip-bg, #f4f2ee);
+  color: var(--strip-text, #0a0a0a);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* header strip pinned to the TOP of the section */
+  /* thin top edge + soft lift, so the panel reads as rising over dark About */
+  border-top: 1px solid rgba(10, 10, 10, 0.08);
+  box-shadow: 0 -24px 60px rgba(10, 10, 10, 0.18);
+  /* comfortable top padding (header sits inset from the top edge); the bottom
+     padding stays modest since the Projects area fills the remaining height */
+  padding: clamp(2rem, 6vh, 4rem) 0 clamp(2rem, 6vh, 4rem);
+  overflow: hidden; /* belt-and-braces: never let the wide track cause scroll */
+}
+
+.strip__inner {
+  width: 100%;
+  flex: 1; /* lets the reserved Projects area grow to fill the section height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------- Outlined band ---------------- */
+.strip__band {
+  position: relative;
+  margin: 0 var(--band-margin, 3.5rem); /* band floats inset from the edges */
+  border: var(--band-bw, 1.5px) solid var(--band-bc, rgba(10, 10, 10, 0.85));
+  border-radius: var(--band-radius, 3rem);
+  padding: var(--band-pad-y, 1rem) 0;
+  overflow: hidden; /* clip the moving strip to the rounded frame */
+}
+
+/* ---------------- Seamless marquee ---------------- */
+.strip__marquee {
+  overflow: hidden; /* clip the strip horizontally inside the band */
+}
+/* the moving strip: 2 identical groups side by side; max-content keeps it on
+   one line so a -50% translate wraps seamlessly. */
+.strip__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+.strip__group {
+  display: flex;
+  flex: none;
+}
+/* one copy = TEXT + SEPARATOR; every copy identical → tiles perfectly. */
+.strip__copy {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.strip__word,
+.strip__sep {
+  display: block;
+  flex: none;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  /* one fluid clamp — big on desktop (MAX), proportionally smaller on phones */
+  font-size: clamp(
+    var(--text-min, 2.1rem),
+    var(--text-pref, 10.5vw),
+    var(--text-max, 7rem)
+  );
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--strip-text, #0a0a0a);
+  user-select: none;
+}
+.strip__sep {
+  margin: 0 var(--sep-gap, 0.4em);
+  font-weight: 400; /* lighter glyph, so the words stay dominant */
+}
+
+/* Reduced-motion rest state: no transform, text centred inside the band. */
+.strip__marquee.is-static .strip__track {
+  width: 100%;
+  justify-content: center;
+  transform: none;
+}
+
+/* ---------------- Lead-in label "↳ Projects" ---------------- */
+.strip__leadin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  margin: clamp(1rem, 2.6vw, 1.7rem) 0 0 var(--band-margin, 3.5rem);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: clamp(0.82rem, 1.4vw, 1rem);
+  letter-spacing: 0.04em;
+  color: var(--strip-text, #0a0a0a);
+  border-radius: 4px;
+  transition: opacity 0.3s var(--ease);
+}
+.strip__leadin:hover {
+  opacity: 0.6; /* quiet, tasteful hover */
+}
+.strip__leadin:focus-visible {
+  outline: 1.5px solid currentColor;
+  outline-offset: 4px;
+}
+.strip__leadin-arrow {
+  font-size: 1.15em;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+/* ================================================================
+   REDUCED MOTION — the section sits in normal flow (cover disabled in
+   App.css), sized to its content. The marquee is static (JS adds
+   .is-static). No reveal, no velocity coupling.
+================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .strip {
+    min-height: auto; /* content-sized — no forced viewport height */
+    box-shadow: none;
+  }
+  .strip__leadin {
+    transition: none;
+  }
+}

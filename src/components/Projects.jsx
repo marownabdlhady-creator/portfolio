@@ -83,12 +83,12 @@ const WORK6_SRC = `${import.meta.env.BASE_URL}work11.png`
    in a new tab automatically (see isExternalHref). Add/remove freely.
 ------------------------------------------------------------------ */
 const PIDX_PROJECTS = [
-  { name: 'Wateen', category: 'Web', year: '2025', image: WORK1_SRC, href: 'https://superb-tiramisu-0f7eb5.netlify.app/' },
+  { name: 'Wateen', category: 'Web', year: '2025', image: WORK1_SRC, href: 'https://wateen-ten.vercel.app/' },
   { name: 'L’Oiseau Dé', category: 'Web', year: '2025', image: WORK2_SRC, href: 'https://pleasant-tenure-401568.framer.app/' },
   { name: 'Firsthouse', category: 'Web', year: '2025', image: WORK3_SRC, href: 'https://firsthouse.framer.website/' },
   { name: 'Mister M', category: 'Store', year: '2025', image: WORK4_SRC, href: 'https://www.mistermstore.net/' },
-  { name: 'My Portfolio', category: 'Portfolio', year: '2025', image: WORK5_SRC, href: 'https://marwanportfolio1.framer.website/' },
-  { name: 'Project 06', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
+  { name: 'Creative Design', category: 'Portfolio', year: '2025', image: WORK5_SRC, href: 'https://marwanportfolio1.framer.website/' },
+  { name: 'My Portfolio', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
 ]
 
 const isExternalHref = (href) => /^https?:/i.test(href || '')

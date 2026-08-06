@@ -76,6 +76,7 @@ const WORK3_SRC = `${import.meta.env.BASE_URL}work3.png`
 const WORK4_SRC = `${import.meta.env.BASE_URL}work4.png`
 const WORK5_SRC = `${import.meta.env.BASE_URL}work10.png`
 const WORK6_SRC = `${import.meta.env.BASE_URL}work11.png`
+const WORK7_SRC = `${import.meta.env.BASE_URL}workk12.png`
 
 /* ----------------------------------------------------------------
    EDIT ME — your real projects. `image` powers both the hover preview
@@ -89,6 +90,7 @@ const PIDX_PROJECTS = [
   { name: 'Mister M', category: 'Store', year: '2025', image: WORK4_SRC, href: 'https://www.mistermstore.net/' },
   { name: 'Creative Design', category: 'Portfolio', year: '2025', image: WORK5_SRC, href: 'https://marwanportfolio1.framer.website/' },
   { name: 'My Portfolio', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
+  { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: '#' },
 ]
 
 const isExternalHref = (href) => /^https?:/i.test(href || '')

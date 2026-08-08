@@ -90,7 +90,7 @@ const PIDX_PROJECTS = [
   { name: 'Mister M', category: 'Store', year: '2025', image: WORK4_SRC, href: 'https://www.mistermstore.net/' },
   { name: 'Creative Design', category: 'Portfolio', year: '2025', image: WORK5_SRC, href: 'https://marwanportfolio1.framer.website/' },
   { name: 'My Portfolio', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
-  { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: '#' },
+  { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: 'https://shri-lgrz.vercel.app/' },
 ]
 
 const isExternalHref = (href) => /^https?:/i.test(href || '')

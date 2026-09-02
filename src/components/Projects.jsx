@@ -11,27 +11,42 @@ gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText)
 
 /* ================================================================
    PROJECTS — section wrapper + the "PROJECTS" title with its word-cycle
-   (SplitText) effect, followed by "THE INDEX": a giant editorial project
-   list (the signature studio-index pattern). Each project is huge display
-   type; on a fine pointer, hovering a row reveals a cursor-following media
-   preview of that project, dims the other rows, and washes the name in the
-   site's cobalt accent. On scroll the names rise letter-by-letter out of
-   masked clip-boxes (SplitText), the divider rules draw across, and the
-   meta fades in (ScrollTrigger). Touch/mobile gets inline thumbnails;
-   reduced-motion gets a clean static list.
+   (SplitText) effect, followed by THE WORK GRID: a visual 3-column grid
+   of project cards (2 on tablet, 1 on phones). Each card is a full-bleed
+   project image in a masked, softly-rounded frame with one compact
+   caption beneath it — index / title / year. The work sells itself; the
+   type is a caption, not the subject.
+
+   MOTION (all transform + opacity only):
+     1. ENTRANCE  — once, on enter. Each card's image rises out of its
+        overflow mask (y 60 -> 0 + fade) on a GRID-AWARE stagger, so the
+        cards arrive as a diagonal wave rather than row-by-row. Each
+        caption follows its own image by 0.1s.
+     2. COLUMN PARALLAX — scrubbed. Outer columns drift at one rate, the
+        second column slightly slower, so the grid breathes with depth
+        instead of moving as a rigid block. Rates are keyed to the LIVE
+        column count via gsap.matchMedia().
+     3. IMAGE PARALLAX — scrubbed, per card. The image is rendered 1.15x
+        inside its overflow-hidden frame and drifts vertically within
+        that overhang as the card crosses the viewport.
+     4. HOVER (fine pointer only) — the hovered card's image zooms gently,
+        every other card dims, and the title's underline draws in from
+        the left. All tweens use overwrite: "auto", so flicking the mouse
+        across the grid can never leave a card stuck dimmed or zoomed.
 
    SAFETY — unchanged contract:
    • The title + word-cycle stay UNTOUCHED (namespaced `pjx-`, scoped under
-     `.pjx`). The index list is a separate namespace `pidx-`, every rule
-     scoped under `.pidx-root` — no global selectors, no leakage.
-   • Rows are VISIBLE BY DEFAULT in CSS; reveal start-states are applied by
-     JS only and fail safe (any throw clears inline styles → static list).
-   • The floating preview is the one `position: fixed` element here — it is
-     aria-hidden, pointer-events:none, hidden unless a row is hovered, and
-     sits BELOW the nav/compact-nav/cursor. It mirrors the cursor's safety
-     model and can't affect any other section.
-   • Each row is a real link carrying the existing `mcur-` cursor's "View"
-     state. Navbar, title effect, cursor internals, Lenis, other sections:
+     `.pjx`). The grid is a separate namespace `pgrid-`, every rule scoped
+     under `.pgrid-root` — no global selectors, no leakage.
+   • Cards are VISIBLE BY DEFAULT in CSS; every reveal/parallax start-state
+     is applied by JS only and fails safe (any throw clears inline styles ->
+     a clean static gallery with working links).
+   • Nothing here is `position: fixed`. Each card is a real link carrying
+     the existing `mcur-` cursor's "View" state.
+   • useGSAP owns a gsap.context() scoped to this component, so every tween,
+     ScrollTrigger and matchMedia listener is reverted on unmount — none can
+     leak or duplicate across navigation / StrictMode double-mounts.
+   • Navbar, title effect, cursor internals, Lenis, other sections:
      untouched. We only LISTEN to Lenis, never re-init it.
 ================================================================ */
 
@@ -52,22 +67,45 @@ const HEAD_EASE = 'none' // slide easing (linear, like the demo — smooth & eve
 const HEAD_START = 'top 85%' // ScrollTrigger: start cycling as the heading enters view
 
 /* ----------------------------------------------------------------
-   INDEX CONFIG — editable. Neutral B/W frame; the cobalt accent and the
+   GRID CONFIG — editable. Neutral B/W frame; the cobalt accent and the
    project screenshots bring the colour.
 ------------------------------------------------------------------ */
-const PIDX = {
-  accent: '#2b2bff', // electric cobalt (site --accent) — the hover wash
-  muted: '#6b6862', // warm grey for numbers/meta (site --muted)
-  line: 'rgba(10, 10, 10, 0.16)', // divider rules
-  eyebrow: 'Selected Work', // small label above the list
+const PGRID = {
+  accent: '#2b2bff', // electric cobalt (site --accent) — focus ring
+  muted: '#6b6862', // warm grey for the index/year captions (site --muted)
+  eyebrow: 'Selected Work', // small label above the grid
   cursorLabel: 'View', // text shown inside the custom cursor on hover
-  // reveal
-  revealStart: 'top 80%',
-  charStagger: 0.014, // per-letter rise within a name
-  rowStagger: 0.08, // offset between rows
-  // floating preview
-  previewLag: 0.55, // seconds of catch-up as the preview trails the cursor
-  previewEase: 'power3',
+
+  /* 1 — ENTRANCE (once, not scrubbed) */
+  revealStart: 'top 80%', // ScrollTrigger start
+  revealY: 60, // px the image rises out of its mask
+  revealDur: 1.2, // seconds
+  revealEase: 'power4.out',
+  revealAmount: 0.9, // TOTAL seconds the grid-aware stagger is spread over
+  captionOffset: 0.1, // seconds each caption trails its own image
+  captionY: 20, // px the caption rises
+  captionDur: 1, // seconds
+
+  /* 2 — COLUMN PARALLAX (scrubbed). yPercent travel from +v to -v across
+     the section, so the total relative shift between a fast and a slow
+     column is ~2 * (main - slow) percent of a card's height — a few dozen
+     px on a typical card. Subtle: the grid must read as alive, never
+     broken or misaligned. */
+  colParallaxMain: 8, // outer columns (1 and 3)
+  colParallaxSlow: 3, // the second column — slightly slower
+
+  /* 3 — IMAGE PARALLAX INSIDE EACH CARD (scrubbed). The image is drawn at
+     `imgScale`, which leaves (imgScale - 1) / 2 = 7.5% of overhang above
+     and below the frame; `imgDrift` must stay inside that or the mask
+     would show a gap. */
+  imgScale: 1.15,
+  imgDrift: 4.5, // yPercent, -v -> +v
+
+  /* 4 — HOVER (fine pointer only) */
+  hoverZoom: 1.04, // multiplies imgScale (1.15 -> 1.196)
+  hoverDim: 0.45, // opacity of every OTHER card
+  hoverDur: 0.6, // seconds
+  hoverEase: 'power2.out',
 }
 
 const WORK1_SRC = `${import.meta.env.BASE_URL}work1.png`
@@ -76,14 +114,16 @@ const WORK3_SRC = `${import.meta.env.BASE_URL}work3.png`
 const WORK4_SRC = `${import.meta.env.BASE_URL}work4.png`
 const WORK5_SRC = `${import.meta.env.BASE_URL}work10.png`
 const WORK6_SRC = `${import.meta.env.BASE_URL}work11.png`
+/* NOTE the double "k" — the file in /public really is `workk12.png`. */
 const WORK7_SRC = `${import.meta.env.BASE_URL}workk12.png`
 
 /* ----------------------------------------------------------------
-   EDIT ME — your real projects. `image` powers both the hover preview
-   (desktop) and the inline thumbnail (mobile). External https hrefs open
-   in a new tab automatically (see isExternalHref). Add/remove freely.
+   EDIT ME — your real projects. `image` is the card's hero. External
+   https hrefs open in a new tab automatically (see isExternalHref).
+   Add/remove freely; the grid, the count and the index numbers all
+   follow the length of this array.
 ------------------------------------------------------------------ */
-const PIDX_PROJECTS = [
+const PGRID_PROJECTS = [
   { name: 'Wateen', category: 'Web', year: '2025', image: WORK1_SRC, href: 'https://wateen-ten.vercel.app/' },
   { name: 'L’Oiseau Dé', category: 'Web', year: '2025', image: WORK2_SRC, href: 'https://pleasant-tenure-401568.framer.app/' },
   { name: 'Firsthouse', category: 'Web', year: '2025', image: WORK3_SRC, href: 'https://firsthouse.framer.website/' },
@@ -93,14 +133,28 @@ const PIDX_PROJECTS = [
   { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: 'https://shri-lgrz.vercel.app/' },
 ]
 
+/* Cards above the fold are worth fetching eagerly; everything after is
+   lazy. One desktop row = 3 cards. */
+const EAGER_COUNT = 3
+
+/* The card widths the browser should plan for, matching the CSS grid
+   (3 cols > 1024px, 2 cols 641-1024px, 1 col below). Vite serves the
+   PNGs as-is (no responsive variants), so this only guides the fetch
+   priority of the lazy images — but it costs nothing and is correct if
+   srcset variants are ever added. */
+const IMG_SIZES = '(max-width: 640px) 100vw, (max-width: 1024px) 46vw, 30vw'
+
 const isExternalHref = (href) => /^https?:/i.test(href || '')
 const pad2 = (n) => String(n).padStart(2, '0')
+
+/* Fresh stagger config per tween — GSAP caches the measured grid on the
+   object it is handed, so the images and the captions must not share one. */
+const gridStagger = () => ({ grid: 'auto', from: 'start', amount: PGRID.revealAmount, axis: null })
 
 export default function Projects() {
   const root = useRef(null)
   const titleRef = useRef(null)
-  const listRef = useRef(null)
-  const previewRef = useRef(null)
+  const gridRef = useRef(null)
 
   /* --------------------------------------------------------------
      HEADING CHAR-CYCLE — scoped to the heading ONLY. The real text
@@ -170,33 +224,31 @@ export default function Projects() {
   )
 
   /* --------------------------------------------------------------
-     INDEX MOTION — two independent, fail-safe pieces:
-
-     (A) SCROLL REVEAL (all pointers): each name rises letter-by-letter out
-         of a masked clip-box, the divider rules draw across (scaleX), and
-         the numbers/meta fade up — one calm pass, once, on enter. Rows are
-         visible by default in CSS; start-states are JS-only and cleared on
-         complete. Any throw clears every inline style → static list.
-
-     (B) CURSOR-FOLLOW PREVIEW (fine pointer + hover only): a fixed,
-         pointer-events:none panel that trails the cursor (quickTo lag) and
-         cross-fades to the hovered project's screenshot. Shown only while a
-         row is hovered; hidden the instant the pointer leaves the list. The
-         row dim/accent/shift themselves are pure CSS :hover (so they work
-         even if this JS never runs). Reverts fully on cleanup.
+     GRID MOTION — four independent, fail-safe pieces (see the header
+     comment). Cards are visible by default in CSS; every start-state is
+     applied here and cleared on complete, so any throw drops us straight
+     back to a static, fully-visible gallery.
   ---------------------------------------------------------------- */
   useGSAP(
     () => {
-      const rootEl = root.current
-      const listEl = listRef.current
-      if (!rootEl || !listEl) return
+      const gridEl = gridRef.current
+      if (!gridEl) return
 
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const rows = gsap.utils.toArray(listEl.querySelectorAll('.pidx-row'))
-      if (!rows.length) return
+      const cards = gsap.utils.toArray(gridEl.querySelectorAll('.pgrid-card'))
+      if (!cards.length) return
 
-      let splits = []
-      let cleanupFns = []
+      const figures = cards.map((c) => c.querySelector('.pgrid-figure')).filter(Boolean)
+      const captions = cards.map((c) => c.querySelector('.pgrid-caption')).filter(Boolean)
+      const drifts = cards.map((c) => c.querySelector('.pgrid-drift')).filter(Boolean)
+      const zooms = cards.map((c) => c.querySelector('.pgrid-zoom')).filter(Boolean)
+
+      // REDUCED MOTION — render the final state and stop. No entrance, no
+      // parallax, no hover: nothing below this line runs.
+      if (reduce) return
+
+      const mm = gsap.matchMedia()
+      const cleanupFns = []
       const offs = []
       const add = (target, ev, fn, opts) => {
         target.addEventListener(ev, fn, opts)
@@ -204,117 +256,249 @@ export default function Projects() {
       }
 
       try {
-        /* ---------- (A) SCROLL REVEAL ---------- */
-        if (!reduce) {
-          const lines = gsap.utils.toArray(rootEl.querySelectorAll('.pidx-line'))
-          const metas = gsap.utils.toArray(rootEl.querySelectorAll('.pidx-rowmeta'))
+        /* ---------- (1) ENTRANCE — masked reveal, diagonal wave ----------
+           Both tweens use an IDENTICAL grid-aware stagger, so a caption
+           always lands exactly `captionOffset` after its own image (the
+           captions sit in the same grid cells, so GSAP measures the same
+           wave for both). Plays once and never replays on scroll-up. */
+        gsap.set(figures, { y: PGRID.revealY, autoAlpha: 0 })
+        gsap.set(captions, { y: PGRID.captionY, autoAlpha: 0 })
 
-          // Split each name into masked chars (each char clipped to its box).
-          const nameEls = rows
-            .map((r) => r.querySelector('.pidx-name'))
-            .filter(Boolean)
-          splits =
-            SplitText && typeof SplitText.create === 'function'
-              ? nameEls.map((el) => SplitText.create(el, { type: 'chars', mask: 'chars' }))
-              : []
-          const allChars = splits.flatMap((s) => s.chars)
+        const intro = gsap.timeline({
+          scrollTrigger: {
+            trigger: gridEl,
+            start: PGRID.revealStart,
+            toggleActions: 'play none none none',
+            once: true,
+          },
+          onComplete: () => {
+            // Rest = natural CSS state; drop the inline transform/opacity so
+            // nothing stale can fight the hover or parallax layers.
+            gsap.set([figures, captions], { clearProps: 'transform,opacity,visibility' })
+          },
+        })
 
-          // Start-states (JS only) — names hidden in their clip-boxes, rules
-          // collapsed, meta lowered. Everything reverts on complete/cleanup.
-          if (allChars.length) gsap.set(allChars, { yPercent: 120 })
-          gsap.set(lines, { scaleX: 0, transformOrigin: 'left center' })
-          gsap.set(metas, { autoAlpha: 0, y: 18 })
-
-          const tl = gsap.timeline({
-            scrollTrigger: { trigger: listEl, start: PIDX.revealStart, once: true },
-            onComplete: () => {
-              // Rest = natural CSS state; drop inline transforms/opacity.
-              gsap.set([lines, metas], { clearProps: 'all' })
-              splits.forEach((s) => {
-                if (s.chars) gsap.set(s.chars, { clearProps: 'transform' })
-              })
+        intro
+          .to(
+            figures,
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: PGRID.revealDur,
+              ease: PGRID.revealEase,
+              stagger: gridStagger(),
             },
-          })
+            0,
+          )
+          .to(
+            captions,
+            {
+              y: 0,
+              autoAlpha: 1,
+              duration: PGRID.captionDur,
+              ease: PGRID.revealEase,
+              stagger: gridStagger(),
+            },
+            PGRID.captionOffset,
+          )
 
-          rows.forEach((row, i) => {
-            const at = i * PIDX.rowStagger
-            const line = row.querySelector('.pidx-line')
-            const meta = row.querySelector('.pidx-rowmeta')
-            const chars = splits[i] ? splits[i].chars : []
-            if (line) tl.to(line, { scaleX: 1, duration: 0.9, ease: 'power3.inOut' }, at)
-            if (chars.length)
-              tl.to(
-                chars,
-                { yPercent: 0, duration: 0.85, ease: 'power4.out', stagger: PIDX.charStagger },
-                at + 0.08,
-              )
-            if (meta)
-              tl.to(meta, { autoAlpha: 1, y: 0, duration: 0.7, ease: 'power3.out' }, at + 0.18)
-          })
+        cleanupFns.push(() => {
+          if (intro.scrollTrigger) intro.scrollTrigger.kill()
+          intro.kill()
+        })
 
+        /* ---------- (3) IMAGE PARALLAX INSIDE EACH CARD (scrubbed) ----------
+           The image is drawn `imgScale` larger than its overflow-hidden
+           frame; the drift layer then slides within that overhang as the
+           card crosses the viewport. Real depth, per card, and the mask
+           never shows a gap because imgDrift < (imgScale - 1) / 2 * 100. */
+        gsap.set(zooms, { scale: PGRID.imgScale })
+
+        cards.forEach((card, i) => {
+          const drift = drifts[i]
+          if (!drift) return
+          const tween = gsap.fromTo(
+            drift,
+            { yPercent: -PGRID.imgDrift },
+            {
+              yPercent: PGRID.imgDrift,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: card,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+              },
+            },
+          )
           cleanupFns.push(() => {
-            tl.kill()
-            if (tl.scrollTrigger) tl.scrollTrigger.kill()
+            if (tween.scrollTrigger) tween.scrollTrigger.kill()
+            tween.kill()
           })
+        })
 
-          // Re-measure once webfonts settle (Anton metrics shift the splits).
-          if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(() => ScrollTrigger.refresh()).catch(() => {})
-          }
+        /* ---------- (2) COLUMN PARALLAX (scrubbed) ----------
+           Keyed to the LIVE column count: with a plain CSS grid, card `i`
+           sits in column `i % cols`, so no measuring is needed — and
+           matchMedia rebuilds these (and only these) when the breakpoint
+           changes, so a resize can never leave the columns mis-keyed.
+           The queries MUST stay in step with ProjectsGrid.css. */
+        const BREAKPOINTS = [
+          ['(min-width: 1025px)', 3],
+          ['(min-width: 641px) and (max-width: 1024px)', 2],
+          ['(max-width: 640px)', 1],
+        ]
+
+        BREAKPOINTS.forEach(([query, cols]) => {
+          mm.add(`${query} and (prefers-reduced-motion: no-preference)`, () => {
+            // Column 2 (index 1) drifts slower; the outer columns share the
+            // main rate. A single column just gets one calm, uniform drift.
+            const slow = []
+            const main = []
+            cards.forEach((card, i) => {
+              ;(cols >= 2 && i % cols === 1 ? slow : main).push(card)
+            })
+
+            const drift = (targets, amount) => {
+              if (!targets.length) return
+              gsap.fromTo(
+                targets,
+                { yPercent: amount },
+                {
+                  yPercent: -amount,
+                  ease: 'none',
+                  scrollTrigger: {
+                    trigger: gridEl,
+                    start: 'top bottom',
+                    end: 'bottom top',
+                    scrub: true,
+                  },
+                },
+              )
+            }
+
+            drift(main, PGRID.colParallaxMain)
+            drift(slow, PGRID.colParallaxSlow)
+
+            // matchMedia reverts everything created in here on breakpoint
+            // exit; clear the residual transform so the grid sits flat.
+            return () => gsap.set(cards, { clearProps: 'transform' })
+          })
+        })
+
+        /* ---------- (4) HOVER — desktop / fine pointer ONLY ----------
+           matchMedia gates this on `(hover: hover) and (pointer: fine)`, so
+           touch devices never bind a single listener. Every tween carries
+           overwrite: "auto" (it only clears the SAME property on the same
+           target, so it can never kill the scrubbed yPercent parallax),
+           which is what keeps rapid mouse movement from stuttering or
+           leaving a card stuck dimmed.
+
+           The un-dim lives on the GRID's mouseleave rather than each card's,
+           so flicking between two adjacent cards hands off directly instead
+           of flashing the whole grid back to full opacity in between. */
+        mm.add(
+          '(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)',
+          () => {
+            const hoverOffs = []
+            const hoverAdd = (target, ev, fn) => {
+              target.addEventListener(ev, fn)
+              hoverOffs.push(() => target.removeEventListener(ev, fn))
+            }
+
+            cards.forEach((card, i) => {
+              const zoom = zooms[i]
+              const rule = card.querySelector('.pgrid-rule')
+              const others = cards.filter((c) => c !== card)
+
+              const onEnter = () => {
+                if (zoom)
+                  gsap.to(zoom, {
+                    scale: PGRID.imgScale * PGRID.hoverZoom,
+                    duration: PGRID.hoverDur,
+                    ease: PGRID.hoverEase,
+                    overwrite: 'auto',
+                  })
+                if (rule)
+                  gsap.to(rule, {
+                    scaleX: 1,
+                    duration: PGRID.hoverDur,
+                    ease: PGRID.hoverEase,
+                    overwrite: 'auto',
+                  })
+                gsap.to(others, {
+                  opacity: PGRID.hoverDim,
+                  duration: PGRID.hoverDur,
+                  ease: PGRID.hoverEase,
+                  overwrite: 'auto',
+                })
+                gsap.to(card, {
+                  opacity: 1,
+                  duration: PGRID.hoverDur,
+                  ease: PGRID.hoverEase,
+                  overwrite: 'auto',
+                })
+              }
+
+              const onLeave = () => {
+                if (zoom)
+                  gsap.to(zoom, {
+                    scale: PGRID.imgScale,
+                    duration: PGRID.hoverDur,
+                    ease: PGRID.hoverEase,
+                    overwrite: 'auto',
+                  })
+                if (rule)
+                  gsap.to(rule, {
+                    scaleX: 0,
+                    duration: PGRID.hoverDur,
+                    ease: PGRID.hoverEase,
+                    overwrite: 'auto',
+                  })
+              }
+
+              hoverAdd(card, 'mouseenter', onEnter)
+              hoverAdd(card, 'mouseleave', onLeave)
+            })
+
+            const onGridLeave = () =>
+              gsap.to(cards, {
+                opacity: 1,
+                duration: PGRID.hoverDur,
+                ease: PGRID.hoverEase,
+                overwrite: 'auto',
+              })
+            hoverAdd(gridEl, 'mouseleave', onGridLeave)
+
+            return () => {
+              hoverOffs.forEach((off) => off())
+              gsap.killTweensOf([...cards, ...zooms])
+              gsap.set(cards, { clearProps: 'opacity' })
+            }
+          },
+        )
+
+        /* ---------- CORRECTNESS: refresh once the layout is final ----------
+           The card frames carry a fixed aspect-ratio, so a decoding image
+           shifts nothing — but webfont metrics move the captions, and a
+           lazy image that only decodes near the fold can still land after
+           ScrollTrigger measured. Refresh on both, cheaply. */
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => ScrollTrigger.refresh()).catch(() => {})
         }
 
-        /* ---------- (B) CURSOR-FOLLOW PREVIEW ---------- */
-        const canHover =
-          !reduce && window.matchMedia('(hover: hover) and (pointer: fine)').matches
-        const preview = previewRef.current
-        if (canHover && preview) {
-          const imgs = gsap.utils.toArray(preview.querySelectorAll('.pidx-preview-card'))
-
-          gsap.set(preview, { xPercent: -50, yPercent: -50, autoAlpha: 0, scale: 0.82 })
-          gsap.set(imgs, { autoAlpha: 0 })
-
-          const xTo = gsap.quickTo(preview, 'x', {
-            duration: PIDX.previewLag,
-            ease: PIDX.previewEase,
-          })
-          const yTo = gsap.quickTo(preview, 'y', {
-            duration: PIDX.previewLag,
-            ease: PIDX.previewEase,
-          })
-
-          let placed = false
-          const onMove = (e) => {
-            if (!placed) {
-              // Jump to the pointer on the first move so it never flies in.
-              gsap.set(preview, { x: e.clientX, y: e.clientY })
-              placed = true
-              return
-            }
-            xTo(e.clientX)
-            yTo(e.clientY)
+        const imgs = gsap.utils.toArray(gridEl.querySelectorAll('img'))
+        let pending = imgs.filter((img) => !img.complete).length
+        if (pending) {
+          const settle = () => {
+            pending -= 1
+            if (pending <= 0) ScrollTrigger.refresh()
           }
-          add(window, 'mousemove', onMove, { passive: true })
-
-          rows.forEach((row, i) => {
-            const onEnter = () => {
-              imgs.forEach((card, j) =>
-                gsap.to(card, { autoAlpha: j === i ? 1 : 0, duration: 0.35, ease: 'power2.out' }),
-              )
-              const active = imgs[i]
-              if (active) {
-                const media = active.querySelector('.pidx-preview-media')
-                if (media) gsap.fromTo(media, { scale: 1.14 }, { scale: 1, duration: 1, ease: 'power3.out' })
-              }
-              gsap.to(preview, { autoAlpha: 1, scale: 1, duration: 0.5, ease: 'power3.out' })
-            }
-            add(row, 'mouseenter', onEnter)
+          imgs.forEach((img) => {
+            if (img.complete) return
+            add(img, 'load', settle, { once: true })
+            add(img, 'error', settle, { once: true })
           })
-
-          const onListLeave = () =>
-            gsap.to(preview, { autoAlpha: 0, scale: 0.82, duration: 0.4, ease: 'power3.out' })
-          add(listEl, 'mouseleave', onListLeave)
-
-          cleanupFns.push(() => gsap.killTweensOf([preview, ...imgs]))
         }
 
         /* Keep ScrollTrigger in sync with Lenis if present (no-op when absent).
@@ -328,24 +512,18 @@ export default function Projects() {
           })
         }
       } catch (err) {
-        // Hard guarantee: clear every inline style so the list is fully visible
-        // and the links still work, and revert any SplitText DOM changes.
+        // Hard guarantee: clear every inline style so the grid is fully
+        // visible and the links still work.
         try {
-          gsap.set(rootEl.querySelectorAll('.pidx-line, .pidx-rowmeta'), { clearProps: 'all' })
-          splits.forEach((s) => {
-            try {
-              s.revert()
-            } catch {
-              /* ignore */
-            }
+          mm.revert()
+          gsap.set([...figures, ...captions, ...drifts, ...zooms, ...cards], {
+            clearProps: 'all',
           })
-          splits = []
-          if (previewRef.current) gsap.set(previewRef.current, { autoAlpha: 0 })
         } catch {
-          /* CSS default keeps the list visible */
+          /* CSS default keeps the grid visible */
         }
         // eslint-disable-next-line no-console
-        console.error('[Projects] index motion init failed; static list shown.', err)
+        console.error('[Projects] grid motion init failed; static grid shown.', err)
       }
 
       return () => {
@@ -357,13 +535,11 @@ export default function Projects() {
             /* ignore */
           }
         })
-        splits.forEach((s) => {
-          try {
-            s.revert()
-          } catch {
-            /* ignore */
-          }
-        })
+        try {
+          mm.revert()
+        } catch {
+          /* ignore */
+        }
       }
     },
     { scope: root },
@@ -386,82 +562,67 @@ export default function Projects() {
         </h2>
       </header>
 
-      {/* THE INDEX — giant editorial project list. Scoped root `.pidx-root`;
-          all styles namespaced `pidx-`. */}
+      {/* THE WORK GRID — 3 columns on desktop, 2 on tablet, 1 on phones.
+          Scoped root `.pgrid-root`; all styles namespaced `pgrid-`. */}
       <div
-        className="pidx-root"
+        className="pgrid-root"
         style={{
-          '--pidx-accent': PIDX.accent,
-          '--pidx-muted': PIDX.muted,
-          '--pidx-line': PIDX.line,
+          '--pgrid-accent': PGRID.accent,
+          '--pgrid-muted': PGRID.muted,
         }}
       >
-        <div className="pidx-eyebrow">
-          <span className="pidx-eyebrow-label">{PIDX.eyebrow}</span>
-          <span className="pidx-eyebrow-count">{`(${pad2(PIDX_PROJECTS.length)})`}</span>
+        <div className="pgrid-eyebrow">
+          <span className="pgrid-eyebrow-label">{PGRID.eyebrow}</span>
+          <span className="pgrid-eyebrow-count">{`(${pad2(PGRID_PROJECTS.length)})`}</span>
         </div>
 
-        <div className="pidx-list" ref={listRef}>
-          {PIDX_PROJECTS.map((p, i) => (
+        <div className="pgrid" ref={gridRef}>
+          {PGRID_PROJECTS.map((p, i) => (
             <a
-              className="pidx-row"
+              className="pgrid-card"
               key={p.name}
               href={p.href || '#'}
-              aria-label={p.name}
+              aria-label={`${p.name} — ${p.category} ${p.year}`}
               data-cursor="view"
-              data-cursor-label={PIDX.cursorLabel}
+              data-cursor-label={PGRID.cursorLabel}
               {...(isExternalHref(p.href)
                 ? { target: '_blank', rel: 'noopener noreferrer' }
                 : {})}
             >
-              {/* Divider rule (drawn on scroll) — sits at the TOP of the row. */}
-              <span className="pidx-line" aria-hidden="true" />
-
-              <span className="pidx-num">{pad2(i + 1)}</span>
-
-              <span className="pidx-name-wrap">
-                <span className="pidx-name">{p.name}</span>
+              {/* MEDIA — the mask. `.pgrid-figure` rises out of it on entry,
+                  `.pgrid-drift` parallaxes within it on scroll, and
+                  `.pgrid-zoom` holds the 1.15x oversize + the hover zoom. */}
+              <span className="pgrid-media">
+                <span className="pgrid-figure">
+                  <span className="pgrid-drift">
+                    <span className="pgrid-zoom">
+                      <img
+                        src={p.image}
+                        alt={`${p.name} — ${p.category} project`}
+                        sizes={IMG_SIZES}
+                        loading={i < EAGER_COUNT ? 'eager' : 'lazy'}
+                        decoding="async"
+                        draggable="false"
+                      />
+                    </span>
+                  </span>
+                </span>
               </span>
 
-              {/* Inline thumbnail — MOBILE/touch only (hover preview is desktop). */}
-              <span className="pidx-thumb" aria-hidden="true">
-                <img src={p.image} alt="" loading="lazy" decoding="async" />
-              </span>
-
-              <span className="pidx-rowmeta">
-                <span className="pidx-cat">
-                  {[p.category, p.year].filter(Boolean).join(' / ') || '—'}
+              {/* CAPTION — one compact row: index / title / year. */}
+              <span className="pgrid-caption">
+                <span className="pgrid-idx">{pad2(i + 1)}</span>
+                <span className="pgrid-name">
+                  <span className="pgrid-name-in">
+                    {p.name}
+                    <span className="pgrid-rule" aria-hidden="true" />
+                  </span>
                 </span>
-                <span className="pidx-arrow" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none">
-                    <path
-                      d="M7 17L17 7M17 7H8M17 7V16"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
+                <span className="pgrid-year">{p.year}</span>
               </span>
             </a>
           ))}
-          {/* Closing rule beneath the last row (also drawn on scroll). */}
-          <span className="pidx-line pidx-line--end" aria-hidden="true" />
         </div>
-      </div>
-
-      {/* FLOATING PREVIEW — fixed, aria-hidden, pointer-events:none. Visible
-          only while a row is hovered (desktop/fine-pointer). Each project is
-          pre-rendered as a stacked card; JS cross-fades to the active one. */}
-      <div className="pidx-preview" ref={previewRef} aria-hidden="true">
-        {PIDX_PROJECTS.map((p) => (
-          <span className="pidx-preview-card" key={p.name}>
-            <span className="pidx-preview-media">
-              <img src={p.image} alt="" decoding="async" />
-            </span>
-          </span>
-        ))}
       </div>
     </section>
   )

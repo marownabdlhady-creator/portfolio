@@ -1,5 +1,10 @@
 /* ================================================================
-   PROJECTS — clean 2-column work grid (scoped + namespaced).
+   PROJECTS — section shell + heading (scoped + namespaced).
+
+   This file owns ONLY the section wrapper, its palette/type tokens, and
+   the "PROJECTS" title with its word-cycle. The work grid that sits
+   beneath the title lives in ProjectsGrid.css (namespace `pgrid-`) and
+   inherits the tokens declared here — one palette, one type stack.
 
    EVERY rule is scoped under `.pjx` and every class is prefixed `pjx-`.
    No global selectors (no bare img/ul/li/section/*, no body, no
@@ -22,11 +27,8 @@
   --pjx-muted: #6b6862; /* warm grey for labels/meta (site --muted) */
   --pjx-img-bg: rgba(10, 10, 10, 0.06); /* placeholder block before image loads */
 
-  /* TUNING — grid layout (bigger, more breathable cards) */
-  --pjx-cols: 2; /* columns on desktop/tablet */
-  --pjx-gap-x: clamp(2rem, 5vw, 5rem); /* horizontal gap between cards */
-  --pjx-gap-y: clamp(3.5rem, 8vh, 6rem); /* vertical gap between rows */
-  --pjx-ratio: 3 / 2; /* thumbnail aspect ratio (consistent across cards) */
+  /* NOTE — the grid's own tuning (columns, gaps, card ratio, radius) lives
+     with the grid, on `.pgrid-root` in ProjectsGrid.css. */
 
   /* FONTS — reuse the site's own faces (no new fonts):
      • display heading = the hero/About display font ('Anton' headline face,
@@ -115,6 +117,5 @@
   will-change: transform;
 }
 
-/* ---- The project grid was removed (blank slate). Only the section
-   wrapper + title above remain; the area below the title is intentionally
-   empty until a new grid is built. ------------------------------- */
+/* ---- The work grid itself (eyebrow + cards) is styled in
+   ProjectsGrid.css, scoped under `.pgrid-root`. ------------------- */

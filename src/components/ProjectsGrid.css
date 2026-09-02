@@ -1,308 +1,247 @@
 /* ================================================================
-   PROJECTS — "THE INDEX": a giant editorial project list. Each project is
-   huge Anton display type on a ruled row; on a fine pointer, hovering a row
-   dims the others, washes the name in cobalt, slides it right, and reveals a
-   cursor-following media preview (the project screenshot). Touch/mobile show
-   an inline thumbnail instead.
+   PROJECTS — the work grid. A visual 3-column card grid (2 on tablet,
+   1 on phones): each card is a full-bleed project image in a masked,
+   softly-rounded frame with a compact caption beneath it
+   (index / title / year). The image is the hero; the text is a caption.
 
-   EVERY rule is scoped under `.pidx-root` (the list) or `.pidx-preview`
-   (the one fixed preview) and every class is prefixed `pidx-`. No global
-   selectors (no bare img/a/div/section/*, no body, no html, no ::selection).
+   EVERY rule is scoped under `.pgrid-root` and every class is prefixed
+   `pgrid-`. No global selectors (no bare img/a/div/section/*, no body,
+   no html, no ::selection) — nothing here can affect the navbar, hero,
+   menu, About, the marquee strip, or any other section. Nothing is
+   `position: fixed`.
 
-   The single `position: fixed` here is the floating preview — it is
-   aria-hidden, pointer-events:none, hidden unless a row is hovered, and sits
-   BELOW the nav/compact-nav/cursor. It mirrors the cursor's safety model and
-   cannot affect any other section.
+   Cards are VISIBLE BY DEFAULT (no opacity:0 / hidden waiting on JS).
+   Every reveal/parallax start-state is applied by JS only and cleared on
+   complete, so if GSAP never runs — or throws — the grid is a clean,
+   fully-visible static gallery with working links.
 
-   Rows are VISIBLE BY DEFAULT (no opacity:0 / hidden waiting on JS). Reveal
-   start-states are applied by JS only and cleared on complete. Motion is
-   transform/opacity only → GPU-friendly, 60fps.
+   Motion is transform + opacity ONLY (no filters, no backdrop-filter, no
+   layout-triggering properties) -> GPU-composited, 60fps.
+
+   TRANSFORM LAYERS — each animated layer owns exactly ONE channel so no
+   two tweens ever fight over the same property:
+     .pgrid-card    -> column parallax        (yPercent, scrubbed)
+                       + hover dim            (opacity)
+     .pgrid-figure  -> entrance reveal        (y + autoAlpha, once)
+     .pgrid-drift   -> in-card image parallax (yPercent, scrubbed)
+     .pgrid-zoom    -> oversize + hover zoom  (scale)
+     .pgrid-caption -> entrance reveal        (y + autoAlpha, once)
+     .pgrid-rule    -> hover underline draw   (scaleX)
 ================================================================ */
 
-.pidx-root {
+.pgrid-root {
+  /* ---- EXPOSED CONSTANTS ------------------------------------------
+     Layout tuning. Colours/fonts are INHERITED from the `.pjx` section
+     (see Projects.css) — no new palette, no new faces. */
+  --pgrid-cols: 3; /* desktop columns (2 on tablet, 1 on phone — below) */
+  --pgrid-gap-x: clamp(1.25rem, 2.4vw, 2.25rem); /* column gap */
+  --pgrid-gap-y: clamp(2.5rem, 5vh, 4rem); /* row gap (looser than the columns) */
+  --pgrid-pad: clamp(0rem, 2vw, 2rem); /* outer padding, on top of the section's */
+  --pgrid-ratio: 4 / 3; /* card image aspect ratio — consistent across every card */
+  --pgrid-radius: 6px; /* subtle rounded corners */
+
   display: block;
-  width: auto;
-  max-width: none;
-  margin: 0;
+  padding-inline: var(--pgrid-pad);
 }
 
-/* Scoped box-sizing (only descendants of .pidx-root — cannot leak). */
-.pidx-root *,
-.pidx-root *::before,
-.pidx-root *::after {
+/* Scoped box-sizing (only descendants of .pgrid-root — cannot leak). */
+.pgrid-root *,
+.pgrid-root *::before,
+.pgrid-root *::after {
   box-sizing: border-box;
 }
 
-/* ---- Eyebrow: "Selected Work" ............... (06) -------------- */
-.pidx-root .pidx-eyebrow {
+/* ---- Eyebrow: "Selected Work" ............... (07) ---------------
+   The section heading and its count stay exactly as they were, directly
+   above the grid. */
+.pgrid-root .pgrid-eyebrow {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: clamp(1.25rem, 3vh, 2.5rem);
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  margin-bottom: clamp(1.5rem, 3.5vh, 2.75rem);
+  font-family: var(--pjx-label-font, 'JetBrains Mono', ui-monospace, monospace);
   font-size: clamp(0.68rem, 1vw, 0.8rem);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--pidx-muted, #6b6862);
+  color: var(--pgrid-muted, #6b6862);
 }
-.pidx-root .pidx-eyebrow-count {
+.pgrid-root .pgrid-eyebrow-count {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- The list ------------------------------------------------- */
-.pidx-root .pidx-list {
-  display: flex;
-  flex-direction: column;
+/* ---- The grid --------------------------------------------------- */
+.pgrid-root .pgrid {
+  display: grid;
+  grid-template-columns: repeat(var(--pgrid-cols), minmax(0, 1fr));
+  column-gap: var(--pgrid-gap-x);
+  row-gap: var(--pgrid-gap-y);
 }
 
-/* ---- Row = the whole card is a link; a ruled, full-width line ---- */
-.pidx-root .pidx-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto 1fr auto; /* number | name | meta(cat + arrow) */
-  align-items: center;
-  column-gap: clamp(1rem, 3vw, 3.5rem);
-  padding: clamp(1.1rem, 2.8vw, 2.6rem) 0;
+/* ---- Card = the whole tile is a link ---- */
+.pgrid-root .pgrid-card {
+  display: block;
+  min-width: 0;
   text-decoration: none;
   color: var(--pjx-ink, #0a0a0a);
   outline: none;
-  isolation: isolate; /* keep the in-row layers self-contained */
+  will-change: transform, opacity; /* column parallax + hover dim */
 }
 
-/* Divider rule — sits at the TOP of each row; the closing one after the last
-   row. Drawn on scroll via scaleX (origin set by JS). transform-only. */
-.pidx-root .pidx-line {
-  position: absolute;
-  top: 0;
-  left: 0;
+/* ---- Media frame — the mask.
+   `overflow: hidden` is what turns the entrance rise into a mask reveal:
+   the figure inside starts pushed down and slides up INTO the frame. The
+   placeholder tint is what shows through in the meantime (and before a
+   lazy image decodes). Fixed aspect-ratio -> zero layout shift on load. */
+.pgrid-root .pgrid-media {
+  display: block; /* it is a <span> — without this, width/aspect-ratio do nothing */
+  position: relative;
   width: 100%;
-  height: 1px;
-  background: var(--pidx-line, rgba(10, 10, 10, 0.16));
-  transform-origin: left center;
-}
-.pidx-root .pidx-line--end {
-  position: relative; /* flows after the last row to close the list */
-}
-
-/* ---- Index number ---- */
-.pidx-root .pidx-num {
-  align-self: center;
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: clamp(0.7rem, 1vw, 0.85rem);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.12em;
-  color: var(--pidx-muted, #6b6862);
-  transition: color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
-  min-width: 1.5em;
-}
-
-/* ---- Name — the big editorial display type ---- */
-.pidx-root .pidx-name-wrap {
-  min-width: 0;
-  /* SplitText masks each char to its own clip-box; keep risers contained. */
+  aspect-ratio: var(--pgrid-ratio);
   overflow: hidden;
-  padding: 0.08em 0; /* breathing room so descenders/ascenders aren't clipped */
-}
-.pidx-root .pidx-name {
-  display: block;
-  margin: 0;
-  font-family: var(--pjx-display-font, 'Anton', 'Space Grotesk', sans-serif);
-  font-weight: 400;
-  font-size: clamp(2rem, 8vw, 6.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.015em;
-  text-transform: uppercase;
-  color: var(--pjx-ink, #0a0a0a);
-  white-space: nowrap;
-  will-change: transform, color;
-  transition:
-    color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),
-    transform 0.55s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
+  border-radius: var(--pgrid-radius);
+  background: var(--pjx-img-bg, rgba(10, 10, 10, 0.06));
+  isolation: isolate; /* keep the stacked transform layers self-contained */
 }
 
-/* ---- Meta (category / year + arrow) ---- */
-.pidx-root .pidx-rowmeta {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.75rem, 1.6vw, 1.6rem);
-  justify-self: end;
-}
-.pidx-root .pidx-cat {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: clamp(0.68rem, 1vw, 0.82rem);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--pidx-muted, #6b6862);
-  transition: color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
-}
-.pidx-root .pidx-arrow {
-  display: inline-flex;
-  flex: 0 0 auto;
-  width: clamp(1.4rem, 2.4vw, 2.2rem);
-  height: clamp(1.4rem, 2.4vw, 2.2rem);
-  color: var(--pjx-ink, #0a0a0a);
-  transition:
-    transform 0.5s var(--ease, cubic-bezier(0.16, 1, 0.3, 1)),
-    color 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
-}
-
-/* ---- Inline thumbnail — MOBILE/touch only (hidden on desktop) ---- */
-.pidx-root .pidx-thumb {
-  display: none;
-}
-
-/* ================================================================
-   HOVER STATE — pure CSS (desktop/fine pointer only). Works even if the
-   preview JS never runs: dim the siblings, wash + slide the hovered name,
-   kick the arrow. The cursor-following image is the JS layer on top.
-================================================================ */
-@media (hover: hover) and (pointer: fine) {
-  .pidx-root .pidx-list:hover .pidx-row {
-    opacity: 0.32;
-    transition: opacity 0.45s var(--ease, cubic-bezier(0.16, 1, 0.3, 1));
-  }
-  .pidx-root .pidx-list:hover .pidx-row:hover {
-    opacity: 1;
-  }
-  .pidx-root .pidx-row:hover .pidx-name {
-    color: var(--pidx-accent, #2b2bff);
-    transform: translateX(clamp(0.75rem, 2.5vw, 2.75rem));
-  }
-  .pidx-root .pidx-row:hover .pidx-num,
-  .pidx-root .pidx-row:hover .pidx-cat {
-    color: var(--pidx-accent, #2b2bff);
-  }
-  .pidx-root .pidx-row:hover .pidx-arrow {
-    color: var(--pidx-accent, #2b2bff);
-    transform: translate(0.28em, -0.28em);
-  }
-}
-
-/* ---- Visible keyboard focus (no mouse) ---- */
-.pidx-root .pidx-row:focus-visible {
-  outline: 2px solid var(--pidx-accent, #2b2bff);
-  outline-offset: 4px;
-  border-radius: 3px;
-}
-.pidx-root .pidx-row:focus-visible .pidx-name {
-  color: var(--pidx-accent, #2b2bff);
-}
-
-/* ================================================================
-   FLOATING PREVIEW — the one fixed element. Trails the cursor (JS), shown
-   only while a row is hovered. pointer-events:none so it never intercepts
-   anything; z-index below the compact nav (9980) and cursor (99999).
-================================================================ */
-.pidx-preview {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 40;
-  width: clamp(260px, 26vw, 460px);
-  aspect-ratio: 4 / 3;
-  pointer-events: none;
-  will-change: transform, opacity;
-  visibility: hidden; /* JS reveals via autoAlpha once a row is hovered */
-}
-.pidx-preview *,
-.pidx-preview *::before,
-.pidx-preview *::after {
-  box-sizing: border-box;
-}
-.pidx-preview-card {
+/* Entrance layer — y + autoAlpha (JS start-state only). */
+.pgrid-root .pgrid-figure {
   position: absolute;
   inset: 0;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #141414;
-  box-shadow:
-    0 24px 60px -20px rgba(10, 10, 10, 0.45),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  will-change: transform, opacity;
 }
-.pidx-preview-media {
+
+/* In-card parallax layer — yPercent, scrubbed. */
+.pgrid-root .pgrid-drift {
   position: absolute;
   inset: 0;
   will-change: transform;
 }
-.pidx-preview-media img {
+
+/* Oversize + hover-zoom layer — scale. JS sets the 1.15 base so the drift
+   above always has overhang to travel into; with JS off it sits at 1 and
+   simply fills the frame. */
+.pgrid-root .pgrid-zoom {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.pgrid-root .pgrid-zoom img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+}
+
+/* ---- Caption — ONE compact row beneath the image: index / title / year.
+   Small and understated, in the site's existing type styles. ---- */
+.pgrid-root .pgrid-caption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: clamp(0.6rem, 1.2vw, 1rem);
+  margin-top: clamp(0.7rem, 1.4vh, 1rem);
+  will-change: transform, opacity;
+}
+
+.pgrid-root .pgrid-idx,
+.pgrid-root .pgrid-year {
+  font-family: var(--pjx-label-font, 'JetBrains Mono', ui-monospace, monospace);
+  font-size: clamp(0.62rem, 0.8vw, 0.72rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  color: var(--pgrid-muted, #6b6862);
+  white-space: nowrap;
+}
+
+.pgrid-root .pgrid-name {
+  min-width: 0;
+  font-family: var(--pjx-text-font, 'Space Grotesk', system-ui, sans-serif);
+  font-weight: 500;
+  font-size: clamp(0.82rem, 1.05vw, 0.95rem);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: var(--pjx-ink, #0a0a0a);
+  white-space: nowrap;
+  /* Clip an over-long title rather than let it collide with the year.
+     The padding keeps the hover underline (which sits BELOW the text box)
+     inside the clip; the equal negative margin cancels the space again —
+     the caption row is baseline-aligned, so neither shifts anything. */
+  overflow: hidden;
+  padding-bottom: 0.5em;
+  margin-bottom: -0.5em;
+}
+
+/* The underline draws in from the left on hover (scaleX, JS-driven). */
+.pgrid-root .pgrid-name-in {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.pgrid-root .pgrid-rule {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.28em;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0); /* CSS default = no underline; JS draws it on hover */
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* ---- Visible keyboard focus (no mouse) ---- */
+.pgrid-root .pgrid-card:focus-visible {
+  outline: 2px solid var(--pgrid-accent, #2b2bff);
+  outline-offset: 6px;
+  border-radius: var(--pgrid-radius);
+}
+.pgrid-root .pgrid-card:focus-visible .pgrid-name {
+  color: var(--pgrid-accent, #2b2bff);
 }
 
 /* ================================================================
-   RESPONSIVE — phones (≤640px): the cursor-preview has no place on touch,
-   so each row becomes a stacked card with an INLINE thumbnail. The list
-   stays a real, tappable index.
+   RESPONSIVE — the breakpoints here MUST stay in step with the
+   `gsap.matchMedia()` queries in Projects.jsx, which key the per-column
+   parallax rates off the live column count:
+     desktop  (min-width: 1025px)   -> 3 columns
+     tablet   (641px - 1024px)      -> 2 columns
+     phone    (max-width: 640px)    -> 1 column
 ================================================================ */
-@media (max-width: 640px) {
-  .pidx-root .pidx-row {
-    grid-template-columns: 1fr auto; /* name spans; meta to the right */
-    grid-template-areas:
-      'num    meta'
-      'name   name'
-      'thumb  thumb';
-    align-items: center;
-    row-gap: clamp(0.85rem, 3vw, 1.25rem);
-    padding: clamp(1.4rem, 6vw, 2rem) 0;
-  }
-  .pidx-root .pidx-num {
-    grid-area: num;
-  }
-  .pidx-root .pidx-rowmeta {
-    grid-area: meta;
-  }
-  .pidx-root .pidx-name-wrap {
-    grid-area: name;
-  }
-  .pidx-root .pidx-name {
-    font-size: clamp(2.4rem, 13vw, 4rem);
-    white-space: normal; /* allow long names to wrap on narrow phones */
-  }
-  .pidx-root .pidx-thumb {
-    grid-area: thumb;
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    overflow: hidden;
-    border-radius: 4px;
-    background: #141414;
-  }
-  .pidx-root .pidx-thumb img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  /* The fixed preview never shows on touch. */
-  .pidx-preview {
-    display: none;
+@media (max-width: 1024px) {
+  .pgrid-root {
+    --pgrid-cols: 2;
   }
 }
 
-/* Coarse pointers (touch) of any width: no floating preview, no hover wash. */
-@media (hover: none) {
-  .pidx-preview {
-    display: none;
+@media (max-width: 640px) {
+  .pgrid-root {
+    --pgrid-cols: 1;
+    --pgrid-gap-y: clamp(2rem, 5vh, 3rem);
+    --pgrid-pad: 0rem; /* the section's own padding is enough on phones */
+  }
+  .pgrid-root .pgrid-media {
+    aspect-ratio: 16 / 10; /* a touch wider so single-column cards are not tall */
   }
 }
 
 /* ================================================================
-   REDUCED MOTION — JS already skips reveal + preview. Kill the hover/transform
-   transitions so the static list simply shows.
+   REDUCED MOTION — JS already skips the entrance, both parallaxes and
+   every hover effect, leaving cards in their final state. Belt-and-braces
+   here: pin the underline hidden so nothing can animate.
 ================================================================ */
 @media (prefers-reduced-motion: reduce) {
-  .pidx-root .pidx-name,
-  .pidx-root .pidx-num,
-  .pidx-root .pidx-cat,
-  .pidx-root .pidx-arrow,
-  .pidx-root .pidx-list:hover .pidx-row {
-    transition: none;
+  .pgrid-root .pgrid-card,
+  .pgrid-root .pgrid-figure,
+  .pgrid-root .pgrid-drift,
+  .pgrid-root .pgrid-zoom,
+  .pgrid-root .pgrid-caption,
+  .pgrid-root .pgrid-rule {
+    will-change: auto;
   }
-  .pidx-preview {
-    display: none;
+  .pgrid-root .pgrid-rule {
+    transform: scaleX(0);
   }
 }

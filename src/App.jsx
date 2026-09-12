@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { Analytics } from '@vercel/analytics/react'
 
 import HeroMarquee from './components/HeroMarquee.jsx'
 import Nav from './components/Nav.jsx'
@@ -79,6 +80,8 @@ export default function App() {
 
   return (
     <main ref={root}>
+      <Analytics />
+
       {/* INTRO PRELOADER — GLOBAL, app-level, mounted ONCE above everything.
           Fixed full-screen black overlay (z-index 100000) shown on the first
           load of a session: "مروان" wordmark + 0→100 counter + tagline, then a

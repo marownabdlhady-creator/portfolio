@@ -116,6 +116,7 @@ const WORK5_SRC = `${import.meta.env.BASE_URL}work10.png`
 const WORK6_SRC = `${import.meta.env.BASE_URL}work11.png`
 /* NOTE the double "k" — the file in /public really is `workk12.png`. */
 const WORK7_SRC = `${import.meta.env.BASE_URL}workk12.png`
+const PIATTO_SRC = `${import.meta.env.BASE_URL}piatto-17.png`
 
 /* ----------------------------------------------------------------
    EDIT ME — your real projects. `image` is the card's hero. External
@@ -125,12 +126,10 @@ const WORK7_SRC = `${import.meta.env.BASE_URL}workk12.png`
 ------------------------------------------------------------------ */
 const PGRID_PROJECTS = [
   { name: 'Wateen', category: 'Web', year: '2025', image: WORK1_SRC, href: 'https://wateen-ten.vercel.app/' },
-  { name: 'L’Oiseau Dé', category: 'Web', year: '2025', image: WORK2_SRC, href: 'https://pleasant-tenure-401568.framer.app/' },
-  { name: 'Firsthouse', category: 'Web', year: '2025', image: WORK3_SRC, href: 'https://firsthouse.framer.website/' },
   { name: 'Mister M', category: 'Store', year: '2025', image: WORK4_SRC, href: 'https://www.mistermstore.net/' },
-  { name: 'Creative Design', category: 'Portfolio', year: '2025', image: WORK5_SRC, href: 'https://marwanportfolio1.framer.website/' },
   { name: 'My Portfolio', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
   { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: 'https://shri-lgrz.vercel.app/' },
+  { name: 'Piatto', category: 'Web', year: '2025', image: PIATTO_SRC, href: 'https://www.piattops.online' },
 ]
 
 /* Cards above the fold are worth fetching eagerly; everything after is

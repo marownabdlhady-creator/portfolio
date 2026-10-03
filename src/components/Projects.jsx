@@ -85,11 +85,11 @@ const PIATTO_SRC = `${import.meta.env.BASE_URL}piatto-17.png`
    in a new tab automatically (see isExternalHref). Add/remove freely.
 ------------------------------------------------------------------ */
 const PIDX_PROJECTS = [
+  { name: 'Piatto', category: 'Web', year: '2025', image: PIATTO_SRC, href: 'https://www.piattops.online' },
   { name: 'Wateen', category: 'Web', year: '2025', image: WORK1_SRC, href: 'https://wateen-ten.vercel.app/' },
   { name: 'Mister M', category: 'Store', year: '2025', image: WORK4_SRC, href: 'https://www.mistermstore.net/' },
   { name: 'My Portfolio', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
   { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: 'https://shri-lgrz.vercel.app/' },
-  { name: 'Piatto', category: 'Web', year: '2025', image: PIATTO_SRC, href: 'https://www.piattops.online' },
 ]
 
 const isExternalHref = (href) => /^https?:/i.test(href || '')

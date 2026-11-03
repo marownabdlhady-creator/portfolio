@@ -78,6 +78,9 @@ const WORK5_SRC = `${import.meta.env.BASE_URL}work10.png`
 const WORK6_SRC = `${import.meta.env.BASE_URL}work11.png`
 const WORK7_SRC = `${import.meta.env.BASE_URL}workk12.png`
 const PIATTO_SRC = `${import.meta.env.BASE_URL}piatto-17.png`
+const SAHAR_SRC = `${import.meta.env.BASE_URL}sahar.png`
+const JEWELLERY_SRC = `${import.meta.env.BASE_URL}jewellery-showroom.png`
+const FIRSTFLOOR_SRC = `${import.meta.env.BASE_URL}firstfloor.jpg`
 
 /* ----------------------------------------------------------------
    EDIT ME — your real projects. `image` powers both the hover preview
@@ -85,11 +88,14 @@ const PIATTO_SRC = `${import.meta.env.BASE_URL}piatto-17.png`
    in a new tab automatically (see isExternalHref). Add/remove freely.
 ------------------------------------------------------------------ */
 const PIDX_PROJECTS = [
+  { name: 'Sahar', category: 'Web', year: '2026', image: SAHAR_SRC, href: 'https://sahar-pi.vercel.app' },
+  { name: 'Jewellery Showroom', category: 'Web', year: '2026', image: JEWELLERY_SRC, href: 'https://jewellery-showroom-flame.vercel.app/' },
   { name: 'Piatto', category: 'Web', year: '2025', image: PIATTO_SRC, href: 'https://www.piattops.online' },
   { name: 'Wateen', category: 'Web', year: '2025', image: WORK1_SRC, href: 'https://wateen-ten.vercel.app/' },
   { name: 'Mister M', category: 'Store', year: '2025', image: WORK4_SRC, href: 'https://www.mistermstore.net/' },
   { name: 'My Portfolio', category: 'Web', year: '2025', image: WORK6_SRC, href: '#' },
   { name: 'SHRI', category: 'Web', year: '2025', image: WORK7_SRC, href: 'https://shri-lgrz.vercel.app/' },
+  { name: 'First Floor', category: 'Three.js', year: '2026', image: FIRSTFLOOR_SRC, href: 'https://firstfloor-two.vercel.app' },
 ]
 
 const isExternalHref = (href) => /^https?:/i.test(href || '')
